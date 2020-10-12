@@ -12,11 +12,11 @@
     <Copyright>Copyright © Vaibhav Goyal. All rights Reserved</Copyright>
     <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <PackageProjectUrl>https://github.com/Username/Project</PackageProjectUrl>
+    <PackageProjectUrl>https://github.com/DynamicODataToSQL/DynamicODataToSQL</PackageProjectUrl>
     <PackageIcon>Icon.png</PackageIcon>
-    <RepositoryUrl>https://github.com/Username/Project.git</RepositoryUrl>
+    <RepositoryUrl>https://github.com/DynamicODataToSQL/DynamicODataToSQL.git</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
-    <PackageReleaseNotes>https://github.com/Username/Project/releases</PackageReleaseNotes>
+    <PackageReleaseNotes>https://github.com/DynamicODataToSQL/DynamicODataToSQL/releases</PackageReleaseNotes>
   </PropertyGroup>
 
   <ItemGroup Label="Package References">
