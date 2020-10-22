@@ -6,12 +6,13 @@ namespace DynamicODataToSQL.Interfaces
     /// IEdmModelBuilder.
     /// </summary>
     public interface IEdmModelBuilder
-    {
+    {        
+
         /// <summary>
         /// BuildTableModel.
         /// </summary>
         /// <param name="tableName">tableName.</param>
         /// <returns>Tuple.</returns>
-        (IEdmModel, IEdmEntityType, IEdmEntitySet) BuildTableModel(string tableName);
+        (IEdmModel, IEdmEntityType, IEdmEntitySet) BuildTableModel(string tableName);       
     }
 }

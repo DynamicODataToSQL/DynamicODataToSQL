@@ -6,7 +6,8 @@ namespace DynamicODataToSQL
     /// IODataToSqlConverter.
     /// </summary>
     public interface IODataToSqlConverter
-    {
+    {       
+
         /// <summary>
         /// ConvertToSQL.
         /// </summary>
