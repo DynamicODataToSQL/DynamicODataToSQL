@@ -71,6 +71,38 @@ IDictionary<string, object> sqlParams = result.Item2;
 
 See Unit tests for more examples
 
+## Example OData Service
+See [DynamicODataSampleService](Samples/DynamicODataSampleService) for and example OData service. 
+
+1. Download [AdventureWorks2019 Sample Database](https://github.com/Microsoft/sql-server-samples/releases/download/adventureworks/AdventureWorks2019.bak)
+2. Restore AdventureWorks2019 database. 
+3. Setup database user and permissions
+
+    ```sql
+    CREATE LOGIN odata_service WITH PASSWORD = 'Password123';   
+    use AdventureWorks2019
+    CREATE USER odata_service FOR LOGIN odata_service;
+    GRANT SELECT ON DATABASE::AdventureWorks2019 TO odata_service;
+    GO
+    ```
+
+4. Run `dotnet run --project .\Samples\DynamicODataSampleService\DynamicODataSampleService.csproj`
+
+5. Use Powershell to query the service, Top 10 Persons by ModifiedDate 
+   
+    ```Powershell
+    Invoke-RestMethod 'https://localhost:5001/tables/Person.Person?orderby=ModifiedDate desc&skip=0&top=10&select=FirstName,LastName,ModifiedDate' | ConvertTo-Json
+    ```   
+
+    Products with StockLevel less than 100
+    
+    ```Powershell
+    Invoke-RestMethod 'https://localhost:5001/tables/Production.Product?filter=SafetyStockLevel lt 100' | ConvertTo-Json
+    ```
+
+   
+
+
 ## Features
 - Supports basic OData syntax for `select`, `filter`, `skip`, `top`, `orderby`
 - Currently does NOT support `expand`, lambda operators.
@@ -85,6 +117,7 @@ See Unit tests for more examples
 
 - String functions `startswith`, `endswith` and `contains` are supported.
   - Spec: http://docs.oasis-open.org/odata/odata/v4.01/odata-v4.01-part2-url-conventions.html#sec_StringandCollectionFunctions.
+
 ## Roadmap
 - Add support for OData datetime functions. http://docs.oasis-open.org/odata/odata/v4.01/odata-v4.01-part2-url-conventions.html#_Toc31360996
 - Add support for OData aggregate syntax. See http://docs.oasis-open.org/odata/odata-data-aggregation-ext/v4.0/odata-data-aggregation-ext-v4.0.html
