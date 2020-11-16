@@ -44,11 +44,8 @@ namespace DynamicODataToSQL.Test
             var actualSQLParams = result.Item2;            
             output.WriteLine("Actual SQL: \n{0} \nParams: {1}", actualSQL, string.Join(",", actualSQLParams.ToArray().Select(kvp => $"{kvp.Key}={kvp.Value}")));
 
-            Assert.Equal(expectedSQL, actualSQL, ignoreCase: true, ignoreLineEndingDifferences: true, ignoreWhiteSpaceDifferences: true);
-            foreach(var kvp in actualSQLParams)
-            {
-                Assert.Equal(expectedSQLParams[kvp.Key], kvp.Value);
-            }
+            Assert.Equal(expectedSQL, actualSQL, ignoreCase: true, ignoreLineEndingDifferences: true, ignoreWhiteSpaceDifferences: true);            
+            Assert.Equal(expectedSQLParams, actualSQLParams);
         }
 
         public static IEnumerable<object[]> GetTestData()
@@ -155,6 +152,75 @@ namespace DynamicODataToSQL.Test
                     {"@p5", "Canada"},
                     {"@p6", "USA"},
                 };
+                yield return new object[] { testName, tableName, odataQueryParams, false, expectedSQL, expectedSQLParams };
+            }
+
+
+            // Test 6
+            {
+                var testName = "Aggregate";
+                var tableName = "Orders";
+                var odataQueryParams = new Dictionary<string, string>
+                {
+                    {"apply","aggregate(TotalAmount with sum as TotalAmount, TotalAmount with average as AverageAmount,$count as OrderCount)"}
+                };
+                var expectedSQL = @"SELECT SUM(TotalAmount) AS TotalAmount, AVG(TotalAmount) AS AverageAmount, Count(1) AS OrderCount FROM [Orders]";
+                var expectedSQLParams = new Dictionary<string, object> { };
+                yield return new object[] { testName, tableName, odataQueryParams, false, expectedSQL, expectedSQLParams };
+            }
+            
+
+            // Test 7
+            {
+                var testName = "GroupBy";
+                var tableName = "Orders";
+                var odataQueryParams = new Dictionary<string, string>
+                {
+                    {"apply","groupby((Country),aggregate(Amount with sum as Total,Amount with average as AvgAmt))"}
+                };
+                var expectedSQL = @"SELECT [Country], Sum(Amount) AS Total, Avg(Amount) AS AvgAmt FROM [Orders] GROUP BY [Country]";
+                var expectedSQLParams = new Dictionary<string, object> { };
+                yield return new object[] { testName, tableName, odataQueryParams, false, expectedSQL, expectedSQLParams };
+            }
+
+
+            // Test 9
+            {
+                var testName = "Filter+GroupBy";
+                var tableName = "Orders";
+                var odataQueryParams = new Dictionary<string, string>
+                {
+                    {"apply","filter(Amount ge 100)/groupby((Country),aggregate(Amount with sum as Total,Amount with average as AvgAmt))"}
+                };
+                var expectedSQL = @"SELECT [Country], Sum(Amount) AS Total, AVG(Amount) AS AvgAmt FROM [Orders] WHERE [Amount] >= @p0 GROUP BY [Country]";
+                var expectedSQLParams = new Dictionary<string, object> { {"@p0", 100} };
+                yield return new object[] { testName, tableName, odataQueryParams, false, expectedSQL, expectedSQLParams };
+            }
+
+            // Test 9
+            {
+                var testName = "Filter+GroupBy+Filter";
+                var tableName = "Orders";
+                var odataQueryParams = new Dictionary<string, string>
+                {
+                    {"apply","filter(Amount ge 100)/groupby((Country),aggregate(Amount with sum as Total,Amount with average as AvgAmt))/filter(AvgAmt ge 20)"}
+                };
+                var expectedSQL = @"SELECT * FROM (SELECT [Country], Sum(Amount) AS Total, AVG(Amount) AS AvgAmt FROM [Orders] WHERE [Amount] >= @p0 GROUP BY [Country]) WHERE [AvgAmt] >= @p1";
+                var expectedSQLParams = new Dictionary<string, object> { { "@p0", 100 },{"@p1",20 } };
+                yield return new object[] { testName, tableName, odataQueryParams, false, expectedSQL, expectedSQLParams };
+            }
+
+            // Test 10
+            {
+                var testName = "Filter+GroupBy++Filter";
+                var tableName = "Orders";
+                var odataQueryParams = new Dictionary<string, string>
+                {
+                    {"apply","filter(Amount ge 100)/groupby((Country),aggregate(Amount with sum as Total,Amount with average as AvgAmt))"},
+                    {"filter","AvgAmt ge 20" }
+                };
+                var expectedSQL = @"SELECT * FROM (SELECT [Country], Sum(Amount) AS Total, AVG(Amount) AS AvgAmt FROM [Orders] WHERE [Amount] >= @p0 GROUP BY [Country]) WHERE [AvgAmt] >= @p1";
+                var expectedSQLParams = new Dictionary<string, object> { { "@p0", 100 }, { "@p1", 20 } };
                 yield return new object[] { testName, tableName, odataQueryParams, false, expectedSQL, expectedSQLParams };
             }
 
