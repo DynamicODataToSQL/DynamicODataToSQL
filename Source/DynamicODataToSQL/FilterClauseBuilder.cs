@@ -1,11 +1,11 @@
-using System;
-using System.Globalization;
-using System.Linq;
-using Microsoft.OData.UriParser;
-using SqlKata;
-
 namespace DynamicODataToSQL
 {
+    using System;
+    using System.Globalization;
+    using System.Linq;
+    using Microsoft.OData.UriParser;
+    using SqlKata;
+
     /// <summary>
     /// FilterClauseBuilder
     /// </summary>

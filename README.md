@@ -104,7 +104,7 @@ See [DynamicODataSampleService](Samples/DynamicODataSampleService) for and examp
 
 
 ## Features
-- Supports basic OData syntax for `select`, `filter`, `skip`, `top`, `orderby`
+- Supports basic OData syntax for `select`, `filter`, `skip`, `top`, `orderby` and now `apply`
 - Currently does NOT support `expand`, lambda operators.
 
 ### filter support
@@ -119,9 +119,9 @@ See [DynamicODataSampleService](Samples/DynamicODataSampleService) for and examp
   - Spec: http://docs.oasis-open.org/odata/odata/v4.01/odata-v4.01-part2-url-conventions.html#sec_StringandCollectionFunctions.
 
 ## Roadmap
-- Add support for OData datetime functions. http://docs.oasis-open.org/odata/odata/v4.01/odata-v4.01-part2-url-conventions.html#_Toc31360996
-- Add support for OData aggregate syntax. See http://docs.oasis-open.org/odata/odata-data-aggregation-ext/v4.0/odata-data-aggregation-ext-v4.0.html
-- Build a sample OData service with docker Image using NorthWind or AdventureWorks DB. 
+- [ ] Add support for OData datetime functions. http://docs.oasis-open.org/odata/odata/v4.01/odata-v4.01-part2-url-conventions.html#_Toc31360996
+- [x] ~~Add support for OData aggregate syntax. See http://docs.oasis-open.org/odata/odata-data-aggregation-ext/v4.0/odata-data-aggregation-ext-v4.0.html~~
+- [x] ~~Build a sample OData service with docker Image using NorthWind or AdventureWorks DB.~~ 
 
 ## Contributing
 

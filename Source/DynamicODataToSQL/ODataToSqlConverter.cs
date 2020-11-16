@@ -55,12 +55,27 @@ namespace DynamicODataToSQL
             parser.Resolver.EnableCaseInsensitive = true;
             parser.Resolver.EnableNoDollarQueryOptions = true;
 
+            var applyClause = parser.ParseApply();
+            var filterClause = parser.ParseFilter();
+            var top = parser.ParseTop();
+            var skip = parser.ParseSkip();
+            var orderbyClause = parser.ParseOrderBy();
+            var selectClause = parser.ParseSelectAndExpand();
+
             var query = new Query(tableName);
 
-            var filterClause = parser.ParseFilter();
-            if (filterClause != null)
+            if (applyClause != null)
             {
-                query = BuildFilterClause(query, filterClause);
+                query = new ApplyClauseBuilder().BuildApplyClause(query, applyClause);
+                if(filterClause != null || selectClause != null)
+                {
+                    query = new Query().From(query);
+                }
+            }
+            
+            if (filterClause != null)
+            {  
+                query = filterClause.Expression.Accept(new FilterClauseBuilder(query));
             }
 
             if (count)
@@ -68,26 +83,22 @@ namespace DynamicODataToSQL
                 query = query.AsCount();
             }
             else
-            {
-                var top = parser.ParseTop();
+            {                
                 if (top.HasValue)
                 {
                     query = query.Take(Convert.ToInt32(top.Value));
                 }
-
-                var skip = parser.ParseSkip();
+                
                 if (skip.HasValue)
                 {
                     query = query.Skip(Convert.ToInt32(skip.Value));
                 }
-
-                var orderbyClause = parser.ParseOrderBy();
+                
                 if (orderbyClause != null)
                 {
                     query = BuildOrderByClause(query, orderbyClause);
                 }
-
-                var selectClause = parser.ParseSelectAndExpand();
+                
                 if (selectClause != null)
                 {
                     query = BuildSelectClause(query, selectClause);
@@ -103,16 +114,9 @@ namespace DynamicODataToSQL
             return (sqlResult.Sql, sqlResult.NamedBindings);
         }
 
-        private static Query BuildFilterClause(Query query, FilterClause filterClause)
-        {
-            var node = filterClause.Expression;
-            var filterClauseBuilder = new FilterClauseBuilder(query);
-            return node.Accept(filterClauseBuilder);
-        }
-
         private static Query BuildOrderByClause(Query query, OrderByClause orderbyClause)
         {
-            if (orderbyClause != null)
+            while (orderbyClause != null)
             {
                 var direction = orderbyClause.Direction;
                 if (orderbyClause.Expression is SingleValueOpenPropertyAccessNode expression)
@@ -127,8 +131,7 @@ namespace DynamicODataToSQL
                     }
                 }
 
-                orderbyClause = orderbyClause.ThenBy;
-                query = BuildOrderByClause(query, orderbyClause);
+                orderbyClause = orderbyClause.ThenBy;                
             }
 
             return query;
