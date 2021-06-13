@@ -224,6 +224,45 @@ namespace DynamicODataToSQL.Test
                 yield return new object[] { testName, tableName, odataQueryParams, false, expectedSQL, expectedSQLParams };
             }
 
+            // Test 11
+            {
+                var testName = "DateTimeFunctions";
+                var tableName = "Orders";
+                var odataQueryParams = new Dictionary<string, string>
+                {                    
+                    {"filter","year(OrderDate) eq 1971" }
+                };
+                var expectedSQL = @"SELECT * FROM [Orders] WHERE DATEPART(YEAR, [OrderDate]) = @p0";
+                var expectedSQLParams = new Dictionary<string, object> { { "@p0", 1971 }};
+                yield return new object[] { testName, tableName, odataQueryParams, false, expectedSQL, expectedSQLParams };
+            }
+
+            // Test 12
+            {
+                var testName = "DateTimeFunctions-Date";
+                var tableName = "Orders";
+                var odataQueryParams = new Dictionary<string, string>
+                {
+                    {"filter","date(OrderDate) gt '2001-01-17'" }
+                };
+                var expectedSQL = @"SELECT * FROM [Orders] WHERE CAST([OrderDate] as date) > @p0";
+                var expectedSQLParams = new Dictionary<string, object> { { "@p0", "2001-01-17" } };
+                yield return new object[] { testName, tableName, odataQueryParams, false, expectedSQL, expectedSQLParams };
+            }
+
+            // Test 13
+            {
+                var testName = "DateTimeFunctions-Time";
+                var tableName = "Orders";
+                var odataQueryParams = new Dictionary<string, string>
+                {
+                    {"filter","time(OrderDate) gt '16:30'" }
+                };
+                var expectedSQL = @"SELECT * FROM [Orders] WHERE CAST([OrderDate] as time) > @p0";
+                var expectedSQLParams = new Dictionary<string, object> { { "@p0", "16:30" } };
+                yield return new object[] { testName, tableName, odataQueryParams, false, expectedSQL, expectedSQLParams };
+            }
+
         }
 
         private static ODataToSqlConverter CreateODataToSqlConverter() => new ODataToSqlConverter(new EdmModelBuilder(), new SqlServerCompiler() { UseLegacyPagination = false });
