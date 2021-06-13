@@ -100,12 +100,9 @@ See [DynamicODataSampleService](Samples/DynamicODataSampleService) for and examp
     Invoke-RestMethod 'https://localhost:5001/tables/Production.Product?filter=SafetyStockLevel lt 100' | ConvertTo-Json
     ```
 
-   
-
-
 ## Features
 - Supports basic OData syntax for `select`, `filter`, `skip`, `top`, `orderby` and now `apply`
-- Currently does NOT support `expand`, lambda operators.
+- Currently does NOT support `expand` and `lambda` operators.
 
 ### filter support
 - All logical operators except `has` and `in` are supported. 
@@ -118,23 +115,38 @@ See [DynamicODataSampleService](Samples/DynamicODataSampleService) for and examp
 - String functions `startswith`, `endswith` and `contains` are supported.
   - Spec: http://docs.oasis-open.org/odata/odata/v4.01/odata-v4.01-part2-url-conventions.html#sec_StringandCollectionFunctions.
 
+- DateTime functions `date`, `time`, `year`, `month`, `day`, `hour` and `minute` are supported.
+  - Spec: http://docs.oasis-open.org/odata/odata/v4.01/odata-v4.01-part2-url-conventions.html#_Toc31360996
+
+### apply support (aggregations)
+Aggregations using Odata `apply` query option is supported. Spec: http://docs.oasis-open.org/odata/odata-data-aggregation-ext/v4.0/odata-data-aggregation-ext-v4.0.html
+
+- Transformations: `filter`, `groupby` and `aggregate` are supported. `expand`, `concat`, `search`, `top`, `bottom` are NOT supported.
+- `sum`, `min`, `max`, `avg`, `countdistinct` and `count` are supported.
+
+Example
+
+  ```
+  \orders?$apply=groupby((Country),aggregate(Amount with sum as Total,Amount with average as AvgAmt))
+  ```
+
+is converted to 
+
+  ```sql
+  SELECT [Country], Sum(Amount) AS Total, Avg(Amount) AS AvgAmt FROM [Orders] GROUP BY [Country]
+  ```
+
+For more advanced aggreagate scenarios supported, see unit tests. 
+
 ## Roadmap
-- [ ] Add support for OData datetime functions. http://docs.oasis-open.org/odata/odata/v4.01/odata-v4.01-part2-url-conventions.html#_Toc31360996
-- [x] ~~Add support for OData aggregate syntax. See http://docs.oasis-open.org/odata/odata-data-aggregation-ext/v4.0/odata-data-aggregation-ext-v4.0.html~~
-- [x] ~~Build a sample OData service with docker Image using NorthWind or AdventureWorks DB.~~ 
+- [] Support for validating column names and column data types.
 
 ## Contributing
-
 We are always looking for people to contribute! To find out how to help out, have a look at 
 our [Contributing Guide](.github/CONTRIBUTING.md).
 
-
 ## Code of Conduct
-
 Please note that this project is released with a [Contributor Code of Conduct](.github/CODE_OF_CONDUCT.md). By participating in this project you agree to abide by its terms.
 
 ## Copyright
-
 Copyright MIT © 2020 Vaibhav Goyal. See [LICENSE](LICENSE) for details.
-
-

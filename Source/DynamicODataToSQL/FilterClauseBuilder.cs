@@ -73,8 +73,16 @@ namespace DynamicODataToSQL
                     if (right.Kind == QueryNodeKind.Constant)
                     {
                         var value = GetConstantValue(right);
-                        string column = GetColumnName(left);
-                        _query = _query.Where(column, op, value);
+                        if (left.Kind == QueryNodeKind.SingleValueFunctionCall)
+                        {
+                            var functionNode = left as SingleValueFunctionCallNode;
+                            _query = ApplyFunction(_query, functionNode, op, value);
+                        }
+                        else
+                        {
+                            string column = GetColumnName(left);
+                            _query = _query.Where(column, op, value);
+                        }
                     }
                     break;
 
@@ -84,7 +92,7 @@ namespace DynamicODataToSQL
 
             return _query;
         }
-
+        
         /// <inheritdoc/>
         public override Query Visit(SingleValueFunctionCallNode nodeIn)
         {
@@ -128,6 +136,31 @@ namespace DynamicODataToSQL
                 default:
                     return _query;
             }
+        }
+
+        private static Query ApplyFunction(Query query, SingleValueFunctionCallNode leftNode, string operand, object rightValue)
+        {
+            var columnName = GetColumnName(leftNode.Parameters.FirstOrDefault());
+            switch (leftNode.Name.ToUpperInvariant())
+            {
+                case "YEAR":
+                case "MONTH":
+                case "DAY":
+                case "HOUR":
+                case "MINUTE":
+                    query = query.WhereDatePart(leftNode.Name, columnName, operand, rightValue);
+                    break;
+                case "DATE":
+                    query = query.WhereDate(columnName, operand, rightValue is DateTime date ? date.ToString("yyyy-MM-dd",CultureInfo.InvariantCulture.DateTimeFormat) : rightValue);
+                    break;
+                case "TIME":
+                    query = query.WhereTime(columnName, operand, rightValue is DateTime time ? time.ToString("HH:mm", CultureInfo.InvariantCulture.DateTimeFormat) : rightValue);
+                    break;
+                default:
+                    break;
+            }
+
+            return query;
         }
 
         private static bool ConvertToDateTimeUTC(string dateTimeString, out DateTime? dateTime)
