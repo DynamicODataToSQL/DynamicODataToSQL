@@ -41,8 +41,8 @@ namespace DynamicODataSampleService.Controllers
             [FromQuery(Name = "$select")] string select,
             [FromQuery(Name = "$filter")] string filter,
             [FromQuery(Name = "$orderby")] string orderby,
-            [FromQuery(Name = "top")] int top = 10,
-            [FromQuery(Name = "skip")] int skip = 0)
+            [FromQuery(Name = "$top")] int top = 10,
+            [FromQuery(Name = "$skip")] int skip = 0)
         {
             var query = _oDataToSqlConverter.ConvertToSQL(tableName,
                     new Dictionary<string, string>
