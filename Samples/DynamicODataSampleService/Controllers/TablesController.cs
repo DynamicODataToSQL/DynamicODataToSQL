@@ -38,11 +38,11 @@ namespace DynamicODataSampleService.Controllers
 
         [HttpGet("{tableName}", Name = "QueryRecords")]
         public async Task<IActionResult> QueryAsync(string tableName,
-            [FromQuery] string select,
-            [FromQuery] string filter,
-            [FromQuery] string orderby,
-            [FromQuery] int top = 10,
-            [FromQuery] int skip = 0)
+            [FromQuery(Name = "$select")] string select,
+            [FromQuery(Name = "$filter")] string filter,
+            [FromQuery(Name = "$orderby")] string orderby,
+            [FromQuery(Name = "$top")] int top = 10,
+            [FromQuery(Name = "$skip")] int skip = 0)
         {
             var query = _oDataToSqlConverter.ConvertToSQL(tableName,
                     new Dictionary<string, string>
@@ -55,22 +55,22 @@ namespace DynamicODataSampleService.Controllers
                     }
                 );
             IEnumerable<dynamic> rows = null;
-            using(var conn = new SqlConnection(_connectionString))
-            {
-                rows = await conn.QueryAsync(query.Item1, query.Item2).ConfigureAwait(false);                
-            }
+            await using var conn = new SqlConnection(this._connectionString);
+            rows = (await conn.QueryAsync(query.Item1, query.Item2).ConfigureAwait(false))?.ToList();
 
             ODataQueryResult result = null;
-            if (rows != null)
+            if (rows == null)
             {
-                var isLastPage = rows.Count() <= top;
-                result = new ODataQueryResult
-                {
-                    Count = isLastPage ? rows.Count() : rows.Count() - 1,
-                    Value = rows.Take(top),
-                    NextLink = isLastPage ? null : BuildNextLink(tableName, select, filter, orderby, top, skip)
-                };                    
+                return new JsonResult(result);
             }
+
+            var isLastPage = rows.Count() <= top;
+            result = new ODataQueryResult
+            {
+                Count = isLastPage ? rows.Count() : rows.Count() - 1,
+                Value = rows.Take(top),
+                NextLink = isLastPage ? null : this.BuildNextLink(tableName, @select, filter, @orderby, top, skip)
+            };
 
             return new JsonResult(result);
         }
@@ -87,7 +87,7 @@ namespace DynamicODataSampleService.Controllers
             nextLink = nextLink
                 .SetQueryParam("select", select)
                 .SetQueryParam("filter", filter)
-                .SetQueryParam("orderBy", orderby)                
+                .SetQueryParam("orderBy", orderby)
                 .SetQueryParam("top", top)
                 .SetQueryParam("skip", skip + top);
 
