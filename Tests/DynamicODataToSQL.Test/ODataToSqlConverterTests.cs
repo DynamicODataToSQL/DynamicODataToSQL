@@ -219,7 +219,7 @@ namespace DynamicODataToSQL.Test
                     {"apply","filter(Amount ge 100)/groupby((Country),aggregate(Amount with sum as Total,Amount with average as AvgAmt))"},
                     {"filter","AvgAmt ge 20" }
                 };
-                var expectedSQL = @"SELECT * FROM (SELECT [Country], Sum(Amount) AS Total, AVG(Amount) AS AvgAmt FROM [Orders] WHERE [Amount] >= @p0 GROUP BY [Country]) WHERE [AvgAmt] >= @p1";
+                var expectedSQL = @"SELECT * FROM (SELECT [Country], Sum(Amount) AS Total, AVG(Amount) AS AvgAmt FROM [Orders] WHERE [Amount] >= @p0 GROUP BY [Country]) AS [apply] WHERE [AvgAmt] >= @p1";
                 var expectedSQLParams = new Dictionary<string, object> { { "@p0", 100 }, { "@p1", 20 } };
                 yield return new object[] { testName, tableName, odataQueryParams, false, expectedSQL, expectedSQLParams };
             }
