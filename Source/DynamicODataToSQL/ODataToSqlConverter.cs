@@ -36,6 +36,34 @@ namespace DynamicODataToSQL
             return CompileSqlKataQuery(query);
         }
 
+        public (string, IDictionary<string, object>) ConvertToSqlFromRawSql(
+            string rawSql,
+            IDictionary<string, string> odataQuery,
+            bool count = false)
+        {
+            var query = BuildSqlKataQueryFromRawSql(rawSql, odataQuery, count);
+            return CompileSqlKataQuery(query);
+        }
+
+        private Query BuildSqlKataQueryFromRawSql(
+          string rawSql,
+          IDictionary<string, string> odataQuery,
+          bool count = false)
+        {
+            if (string.IsNullOrWhiteSpace(rawSql))
+            {
+                throw new ArgumentNullException(nameof(rawSql));
+            }
+
+            var tableName = "RawSql";
+            var query = new Query(tableName);
+            query = this.BuildSqlKataQueryFromOdataParameters(query, tableName, odataQuery, count);
+
+            query.WithRaw(tableName, rawSql);
+
+            return query;
+        }
+
         private Query BuildSqlKataQuery(
             string tableName,
             IDictionary<string, string> odataQuery,
@@ -46,14 +74,14 @@ namespace DynamicODataToSQL
                 throw new ArgumentNullException(nameof(tableName));
             }
 
-            var result = _edmModelBuilder.BuildTableModel(tableName);
-            var model = result.Item1;
-            var entityType = result.Item2;
-            var entitySet = result.Item3;
+            var query = new Query(tableName);
 
-            var parser = new ODataQueryOptionParser(model, entityType, entitySet, odataQuery);
-            parser.Resolver.EnableCaseInsensitive = true;
-            parser.Resolver.EnableNoDollarQueryOptions = true;
+            return this.BuildSqlKataQueryFromOdataParameters(query, tableName, odataQuery, count);
+        }
+
+        private Query BuildSqlKataQueryFromOdataParameters(Query query, string modelName, IDictionary<string, string> odataQuery, bool count = false)
+        {
+            var parser = GetParser(modelName, odataQuery);
 
             var applyClause = parser.ParseApply();
             var filterClause = parser.ParseFilter();
@@ -61,8 +89,6 @@ namespace DynamicODataToSQL
             var skip = parser.ParseSkip();
             var orderbyClause = parser.ParseOrderBy();
             var selectClause = parser.ParseSelectAndExpand();
-
-            var query = new Query(tableName);
 
             if (applyClause != null)
             {
@@ -106,6 +132,17 @@ namespace DynamicODataToSQL
             }
 
             return query;
+        }
+        private ODataQueryOptionParser GetParser(string name, IDictionary<string, string> odataQuery)
+        {
+            var result = _edmModelBuilder.BuildTableModel(name);
+            var model = result.Item1;
+            var entityType = result.Item2;
+            var entitySet = result.Item3;
+            var parser = new ODataQueryOptionParser(model, entityType, entitySet, odataQuery);
+            parser.Resolver.EnableCaseInsensitive = true;
+            parser.Resolver.EnableNoDollarQueryOptions = true;
+            return parser;
         }
 
         private (string, IDictionary<string, object>) CompileSqlKataQuery(Query query)
