@@ -262,6 +262,38 @@ namespace DynamicODataToSQL.Test
                 var expectedSQLParams = new Dictionary<string, object> { { "@p0", "16:30" } };
                 yield return new object[] { testName, tableName, odataQueryParams, false, expectedSQL, expectedSQLParams };
             }
+            // Test 14
+            {
+                var testName = "Filter+ToUpper";
+                var tableName = "Products";
+                var odataQueryParams = new Dictionary<string, string>
+                {
+                    {"select", "Name, Type" },
+                    {"filter", "toupper(Name) eq 'Tea'" },
+                };
+                var expectedSQL = @"SELECT [Name], [Type] FROM [Products] WHERE LOWER([Name]) LIKE @p0";
+                var expectedSQLParams = new Dictionary<string, object>
+                {
+                    {"@p0", "tea"}
+                };
+                yield return new object[] { testName, tableName, odataQueryParams, false, expectedSQL, expectedSQLParams };
+            }
+            // Test 15
+            {
+                var testName = "Filter+Contains+ToUpper";
+                var tableName = "Products";
+                var odataQueryParams = new Dictionary<string, string>
+                {
+                    {"select", "Name, Type" },
+                    {"filter", "contains(toupper(Name),'Tea')" },
+                };
+                var expectedSQL = @"SELECT [Name], [Type] FROM [Products] WHERE LOWER([Name]) like @p0";
+                var expectedSQLParams = new Dictionary<string, object>
+                {
+                    {"@p0", "%tea%"}
+                };
+                yield return new object[] { testName, tableName, odataQueryParams, false, expectedSQL, expectedSQLParams };
+            }
 
         }
 

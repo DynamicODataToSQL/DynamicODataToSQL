@@ -21,7 +21,7 @@ namespace DynamicODataToSQL
         public FilterClauseBuilder(Query query)
         {
             _query = query;
-        }        
+        }
 
         /// <inheritdoc/>
         public override Query Visit(BinaryOperatorNode nodeIn)
@@ -92,7 +92,7 @@ namespace DynamicODataToSQL
 
             return _query;
         }
-        
+
         /// <inheritdoc/>
         public override Query Visit(SingleValueFunctionCallNode nodeIn)
         {
@@ -103,16 +103,36 @@ namespace DynamicODataToSQL
 
             var nodes = nodeIn.Parameters.ToArray();
 
+            var caseSensitive = true;
+            var columnName = GetColumnName(nodes[0]);
+
+            // managing case where there is toupper or tolower function call inside first parameter
+            if (nodes[0].Kind == QueryNodeKind.Convert)
+            {
+                var paramNode = (nodes[0] as ConvertNode).Source;
+                if (paramNode.Kind == QueryNodeKind.SingleValueFunctionCall)
+                {
+                    var functionNode = paramNode as SingleValueFunctionCallNode;
+
+                    var functionName = functionNode.Name.ToUpperInvariant();
+                    if (functionName == "TOUPPER" || functionName == "TOLOWER")
+                    {
+                        caseSensitive = false;
+                        columnName = GetColumnName(functionNode.Parameters.FirstOrDefault());
+                    }
+                }
+            }
+
             switch (nodeIn.Name.ToLowerInvariant())
             {
                 case "contains":
-                    return _query.WhereContains(GetColumnName(nodes[0]), (string)GetConstantValue(nodes[1]), true);
+                    return _query.WhereContains(columnName, (string)GetConstantValue(nodes[1]), caseSensitive);
 
                 case "endswith":
-                    return _query.WhereEnds(GetColumnName(nodes[0]), (string)GetConstantValue(nodes[1]), true);
+                    return _query.WhereEnds(columnName, (string)GetConstantValue(nodes[1]), caseSensitive);
 
                 case "startswith":
-                    return _query.WhereStarts(GetColumnName(nodes[0]), (string)GetConstantValue(nodes[1]), true);
+                    return _query.WhereStarts(columnName, (string)GetConstantValue(nodes[1]), caseSensitive);
 
                 default:
                     return _query;
@@ -151,10 +171,14 @@ namespace DynamicODataToSQL
                     query = query.WhereDatePart(leftNode.Name, columnName, operand, rightValue);
                     break;
                 case "DATE":
-                    query = query.WhereDate(columnName, operand, rightValue is DateTime date ? date.ToString("yyyy-MM-dd",CultureInfo.InvariantCulture.DateTimeFormat) : rightValue);
+                    query = query.WhereDate(columnName, operand, rightValue is DateTime date ? date.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture.DateTimeFormat) : rightValue);
                     break;
                 case "TIME":
                     query = query.WhereTime(columnName, operand, rightValue is DateTime time ? time.ToString("HH:mm", CultureInfo.InvariantCulture.DateTimeFormat) : rightValue);
+                    break;
+                case "TOUPPER":
+                case "TOLOWER":
+                    query = query.WhereLike(columnName, rightValue, false);
                     break;
                 default:
                     break;
