@@ -263,6 +263,19 @@ namespace DynamicODataToSQL.Test
                 yield return new object[] { testName, tableName, odataQueryParams, false, expectedSQL, expectedSQLParams };
             }
 
+            // Test 14
+            {
+                var testName = "Compute+GroupBy";
+                var tableName = "Orders";
+                var odataQueryParams = new Dictionary<string, string>
+                {
+                    {"apply","compute(year(OrderDate) as yr, month(OrderDate) as mn)/groupby((yr,mn),aggregate(value with average as AvgValue))" }
+                };
+                var expectedSQL = @"SELECT [yr], [mn], AVG(value) AS AvgValue FROM (SELECT *, year(OrderDate) as yr, month(OrderDate) as mn FROM [Orders]) GROUP BY [yr], [mn]";
+                var expectedSQLParams = new Dictionary<string, object> {  };
+                yield return new object[] { testName, tableName, odataQueryParams, false, expectedSQL, expectedSQLParams };
+            }
+
         }
 
         private static ODataToSqlConverter CreateODataToSqlConverter() => new ODataToSqlConverter(new EdmModelBuilder(), new SqlServerCompiler() { UseLegacyPagination = false });
