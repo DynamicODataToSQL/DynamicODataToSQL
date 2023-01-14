@@ -59,7 +59,9 @@ namespace DynamicODataToSQL
                     case TransformationNodeKind.Filter:                        
                         queryIn = Visit(queryIn, node as FilterTransformationNode);
                         break;
-                    case TransformationNodeKind.Compute:                        
+                    case TransformationNodeKind.Compute:
+                        queryIn = Visit(queryIn, node as ComputeTransformationNode);
+                        break;
                     case TransformationNodeKind.Expand:                        
                     default:
                         throw new NotSupportedException($"TransformationNode not {node.Kind:g} supported");                        
@@ -113,6 +115,38 @@ namespace DynamicODataToSQL
             {
                 queryIn = Visit(queryIn, nodeIn.ChildTransformations as AggregateTransformationNode);
             }
+
+            return queryIn;
+        }
+
+        private static Query Visit(Query queryIn, ComputeTransformationNode nodeIn)
+        {
+            queryIn = queryIn.SelectRaw("*");
+            foreach (var computeExpression in nodeIn.Expressions)
+            {
+                if (computeExpression.Expression is SingleValueFunctionCallNode se)
+                {
+                    switch (se.Name.ToUpperInvariant())
+                    {
+                        case "YEAR":
+                        case "MONTH":
+                        case "DAY":
+                        case "HOUR":
+                        case "MINUTE":
+                            var pr = se.Parameters.Single();
+                            var columnName = GetColumnName(pr);
+                            queryIn = queryIn.SelectRaw($"{se.Name}({columnName}) as {computeExpression.Alias}");
+                            break;
+                        default:
+                            throw new NotSupportedException($"Aggregate method {se.Name} not supported");
+                    }
+                }
+                else
+                {
+                    throw new NotSupportedException($"Compute expression {computeExpression.Expression.GetType().Name} not supported");
+                }  
+            }
+            
 
             return queryIn;
         }
