@@ -69,7 +69,7 @@ namespace DynamicODataToSQL
                 query = new ApplyClauseBuilder().BuildApplyClause(query, applyClause);
                 if(filterClause != null || selectClause != null)
                 {
-                    query = new Query().From(query);
+                    query = new Query().From(query, "apply");
                 }
             }
             
