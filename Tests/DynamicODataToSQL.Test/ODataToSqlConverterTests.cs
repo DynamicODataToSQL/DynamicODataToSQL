@@ -262,6 +262,51 @@ namespace DynamicODataToSQL.Test
                 var expectedSQLParams = new Dictionary<string, object> { { "@p0", "16:30" } };
                 yield return new object[] { testName, tableName, odataQueryParams, false, expectedSQL, expectedSQLParams };
             }
+            // Test 14
+            {
+                var testName = "Filter+ToUpper";
+                var tableName = "Products";
+                var odataQueryParams = new Dictionary<string, string>
+                {
+                    {"select", "Name, Type" },
+                    {"filter", "toupper(Name) eq 'Tea'" },
+                };
+                var expectedSQL = @"SELECT [Name], [Type] FROM [Products] WHERE LOWER([Name]) LIKE @p0";
+                var expectedSQLParams = new Dictionary<string, object>
+                {
+                    {"@p0", "tea"}
+                };
+                yield return new object[] { testName, tableName, odataQueryParams, false, expectedSQL, expectedSQLParams };
+            }
+            // Test 15
+            {
+                var testName = "Filter+Contains+ToUpper";
+                var tableName = "Products";
+                var odataQueryParams = new Dictionary<string, string>
+                {
+                    {"select", "Name, Type" },
+                    {"filter", "contains(toupper(Name),'Tea')" },
+                };
+                var expectedSQL = @"SELECT [Name], [Type] FROM [Products] WHERE LOWER([Name]) like @p0";
+                var expectedSQLParams = new Dictionary<string, object>
+                {
+                    {"@p0", "%tea%"}
+                };
+                yield return new object[] { testName, tableName, odataQueryParams, false, expectedSQL, expectedSQLParams };
+            }
+
+            // Test 14
+            {
+                var testName = "Compute+GroupBy";
+                var tableName = "Orders";
+                var odataQueryParams = new Dictionary<string, string>
+                {
+                    {"apply","compute(year(OrderDate) as yr, month(OrderDate) as mn)/groupby((yr,mn),aggregate(value with average as AvgValue))" }
+                };
+                var expectedSQL = @"SELECT [yr], [mn], AVG(value) AS AvgValue FROM (SELECT *, year(OrderDate) as yr, month(OrderDate) as mn FROM [Orders]) GROUP BY [yr], [mn]";
+                var expectedSQLParams = new Dictionary<string, object> {  };
+                yield return new object[] { testName, tableName, odataQueryParams, false, expectedSQL, expectedSQLParams };
+            }
 
         }
 
