@@ -13,14 +13,16 @@ namespace DynamicODataToSQL
     {
         private const DateTimeStyles DATETIMESTYLES = DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal | DateTimeStyles.AllowWhiteSpaces;
         private Query _query;
+        private readonly bool _tryToParseDates;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="FilterClauseBuilder"/> class.
         /// </summary>
         /// <param name="query">query.</param>
-        public FilterClauseBuilder(Query query)
+        public FilterClauseBuilder(Query query, bool tryToParseDates)
         {
             _query = query;
+            _tryToParseDates = tryToParseDates;
         }
 
         /// <inheritdoc/>
@@ -43,13 +45,13 @@ namespace DynamicODataToSQL
                 case BinaryOperatorKind.And:
                     _query = _query.Where(q =>
                     {
-                        var lb = new FilterClauseBuilder(q);
+                        var lb = new FilterClauseBuilder(q, _tryToParseDates);
                         var lq = left.Accept(lb);
                         if (nodeIn.OperatorKind == BinaryOperatorKind.Or)
                         {
                             lq = lq.Or();
                         }
-                        var rb = new FilterClauseBuilder(lq);
+                        var rb = new FilterClauseBuilder(lq, _tryToParseDates);
                         return right.Accept(rb);
                     });
                     break;
@@ -65,7 +67,7 @@ namespace DynamicODataToSQL
                     {
                         _query = _query.Where(q =>
                         {
-                            var lb = new FilterClauseBuilder(q);
+                            var lb = new FilterClauseBuilder(q, _tryToParseDates);
                             return left.Accept(lb);
                         });
                         left = (left as UnaryOperatorNode).Operand;
@@ -222,7 +224,7 @@ namespace DynamicODataToSQL
             return column;
         }
 
-        private static object GetConstantValue(QueryNode node)
+        private object GetConstantValue(QueryNode node)
         {
             if (node.Kind == QueryNodeKind.Convert)
             {
@@ -234,7 +236,7 @@ namespace DynamicODataToSQL
                 if (value is string)
                 {
                     var trimedValue = value.ToString().Trim();
-                    if (ConvertToDateTimeUTC(trimedValue, out var dateTime))
+                    if (_tryToParseDates && ConvertToDateTimeUTC(trimedValue, out var dateTime))
                     {
                         return dateTime.Value;
                     }

@@ -138,6 +138,45 @@ is converted to
 
 For more advanced aggreagate scenarios supported, see unit tests. 
 
+### Handling Dates on filter
+
+By default filter values are checked if they can be converted to dates. Sometimes this is not expected. You can disable date parsing by setting up tryToParseDate to false on ConvertToSqlFromRawSql function.
+
+Example
+
+```c#
+var converter = new ODataToSqlConverter(new EdmModelBuilder(), new SqlServerCompiler() { UseLegacyPagination = false });
+var tableName = "Customers"; 
+converter.ConvertToSqlFromRawSql(customSqlQuery, oDataParams, false, false);
+
+var odataQueryParams = new Dictionary<string, string>
+                {
+                    {"select", "Name, Type" },
+                    {"filter", "Name eq '2022-11-30'" },
+                };
+
+// Default conversion with Date Parsing
+ var result = converter.ConvertToSQL(
+                tableName,
+                odataQueryParams,
+                false);
+                
+string sql = result.Item1;
+// SELECT [Name], [Type] FROM [Products] WHERE [Name] = @p0
+IDictionary<string, object> sqlParams = resultWithoutParsedDates.Item2; 
+// {"@p0", "11/30/2022 12:00:00 AM"}
+
+// Conversion without Date Parsing
+var resultWithoutParsedDates = converter.ConvertToSQL(
+                tableName,
+                odataQueryParams,
+                false,
+                false);
+string sql = resultWithoutParsedDates.Item1;
+// SELECT [Name], [Type] FROM [Products] WHERE [Name] = @p0
+IDictionary<string, object> sqlParams = resultWithoutParsedDates.Item2; 
+// {"@p0", "2022-11-30"}
+```
 ## Roadmap
 - [] Support for validating column names and column data types.
 
