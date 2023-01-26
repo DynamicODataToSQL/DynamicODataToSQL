@@ -138,6 +138,7 @@ is converted to
 
 For more advanced aggreagate scenarios supported, see unit tests. 
 
+
 ### Handling Dates on filter
 
 By default filter values are checked if they can be converted to dates. Sometimes this is not expected. You can disable date parsing by setting up tryToParseDate to false on ConvertToSqlFromRawSql function.
@@ -177,12 +178,38 @@ string sql = resultWithoutParsedDates.Item1;
 IDictionary<string, object> sqlParams = resultWithoutParsedDates.Item2; 
 // {"@p0", "2022-11-30"}
 ```
+
+### Custom SQL
+
+You can now use custom query as source (instead of table) and be able to build query in response. WITH clause is used to wrap custom query. 
+
+Example
+
+```http request
+$apply=aggregate(TotalAmount with sum as TotalAmount, TotalAmount with average as AverageAmount,$count as OrderCount)
+```
+```c#
+var rawSql = "SELECT * FROM [Orders]";
+converter.ConvertToSqlFromRawSql(customSqlQuery, oDataParams, count);
+```
+is converted  to
+```sql
+WITH [RawSql] AS (SELECT * FROM [Orders])
+SELECT Sum(TotalAmount) AS TotalAmount, AVG(TotalAmount) AS AverageAmount, COUNT(1) AS OrderCount FROM [RawSql] 
+```
+
+Check unit tests for more usage examples.
+
+
 ## Roadmap
 - [] Support for validating column names and column data types.
 
 ## Contributing
 We are always looking for people to contribute! To find out how to help out, have a look at 
 our [Contributing Guide](.github/CONTRIBUTING.md).
+
+## Contributors
+* [Maciej Pieprzyk](https://github.com/maciejpieprzyk)
 
 ## Code of Conduct
 Please note that this project is released with a [Contributor Code of Conduct](.github/CODE_OF_CONDUCT.md). By participating in this project you agree to abide by its terms.
