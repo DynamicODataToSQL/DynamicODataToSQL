@@ -13,7 +13,7 @@ namespace DynamicODataToSQL
     public class ODataToSqlConverter : IODataToSqlConverter
     {
         private readonly IEdmModelBuilder _edmModelBuilder;
-        private readonly Compiler _sqlCompiler;       
+        private readonly Compiler _sqlCompiler;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ODataToSqlConverter"/> class.
@@ -24,31 +24,34 @@ namespace DynamicODataToSQL
         {
             _edmModelBuilder = edmModelBuilder ?? throw new ArgumentNullException(nameof(edmModelBuilder));
             _sqlCompiler = sqlCompiler ?? throw new ArgumentNullException(nameof(sqlCompiler));
-        }       
+        }
 
         /// <inheritdoc/>
         public (string, IDictionary<string, object>) ConvertToSQL(
             string tableName,
             IDictionary<string, string> odataQuery,
-            bool count = false)
+            bool count = false,
+            bool tryToParseDates = true)
         {
-            var query = BuildSqlKataQuery(tableName, odataQuery, count);
+            var query = BuildSqlKataQuery(tableName, odataQuery, count, tryToParseDates);
             return CompileSqlKataQuery(query);
         }
 
         public (string, IDictionary<string, object>) ConvertToSqlFromRawSql(
             string rawSql,
             IDictionary<string, string> odataQuery,
-            bool count = false)
+            bool count = false,
+            bool tryToParseDates = true)
         {
-            var query = BuildSqlKataQueryFromRawSql(rawSql, odataQuery, count);
+            var query = BuildSqlKataQueryFromRawSql(rawSql, odataQuery, count, tryToParseDates);
             return CompileSqlKataQuery(query);
         }
 
         private Query BuildSqlKataQueryFromRawSql(
           string rawSql,
           IDictionary<string, string> odataQuery,
-          bool count = false)
+          bool count,
+          bool tryToParseDates)
         {
             if (string.IsNullOrWhiteSpace(rawSql))
             {
@@ -57,7 +60,7 @@ namespace DynamicODataToSQL
 
             var tableName = "RawSql";
             var query = new Query(tableName);
-            query = this.BuildSqlKataQueryFromOdataParameters(query, tableName, odataQuery, count);
+            query = this.BuildSqlKataQueryFromOdataParameters(query, tableName, odataQuery, count, tryToParseDates);
 
             query.WithRaw(tableName, rawSql);
 
@@ -67,7 +70,8 @@ namespace DynamicODataToSQL
         private Query BuildSqlKataQuery(
             string tableName,
             IDictionary<string, string> odataQuery,
-            bool count = false)
+            bool count,
+            bool tryToParseDates)
         {
             if (string.IsNullOrWhiteSpace(tableName))
             {
@@ -76,10 +80,10 @@ namespace DynamicODataToSQL
 
             var query = new Query(tableName);
 
-            return this.BuildSqlKataQueryFromOdataParameters(query, tableName, odataQuery, count);
+            return this.BuildSqlKataQueryFromOdataParameters(query, tableName, odataQuery, count, tryToParseDates);
         }
 
-        private Query BuildSqlKataQueryFromOdataParameters(Query query, string modelName, IDictionary<string, string> odataQuery, bool count = false)
+        private Query BuildSqlKataQueryFromOdataParameters(Query query, string modelName, IDictionary<string, string> odataQuery, bool count, bool tryToParseDates)
         {
             var parser = GetParser(modelName, odataQuery);
 
@@ -92,16 +96,16 @@ namespace DynamicODataToSQL
 
             if (applyClause != null)
             {
-                query = new ApplyClauseBuilder().BuildApplyClause(query, applyClause);
+                query = new ApplyClauseBuilder().BuildApplyClause(query, applyClause, tryToParseDates);
                 if(filterClause != null || selectClause != null)
                 {
                     query = new Query().From(query, "apply");
                 }
             }
-            
+
             if (filterClause != null)
-            {  
-                query = filterClause.Expression.Accept(new FilterClauseBuilder(query));
+            {
+                query = filterClause.Expression.Accept(new FilterClauseBuilder(query, tryToParseDates));
             }
 
             if (count)
@@ -109,22 +113,22 @@ namespace DynamicODataToSQL
                 query = query.AsCount();
             }
             else
-            {                
+            {
                 if (top.HasValue)
                 {
                     query = query.Take(Convert.ToInt32(top.Value));
                 }
-                
+
                 if (skip.HasValue)
                 {
                     query = query.Skip(Convert.ToInt32(skip.Value));
                 }
-                
+
                 if (orderbyClause != null)
                 {
                     query = BuildOrderByClause(query, orderbyClause);
                 }
-                
+
                 if (selectClause != null)
                 {
                     query = BuildSelectClause(query, selectClause);
@@ -168,7 +172,7 @@ namespace DynamicODataToSQL
                     }
                 }
 
-                orderbyClause = orderbyClause.ThenBy;                
+                orderbyClause = orderbyClause.ThenBy;
             }
 
             return query;
@@ -188,6 +192,6 @@ namespace DynamicODataToSQL
             }
 
             return query;
-        }       
+        }
     }
 }

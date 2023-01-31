@@ -12,12 +12,12 @@ namespace DynamicODataToSQL
     public class ApplyClauseBuilder
     {
         /// <summary>
-        /// 
+        ///
         /// </summary>
         /// <param name="queryIn"></param>
         /// <param name="applyClause"></param>
         /// <returns></returns>
-        public Query BuildApplyClause(Query queryIn, ApplyClause applyClause)
+        public Query BuildApplyClause(Query queryIn, ApplyClause applyClause, bool tryToParseDates)
         {
             if (queryIn is null)
             {
@@ -43,28 +43,28 @@ namespace DynamicODataToSQL
                 // 8. Filter / GroupBy / GroupBy .../ GroupBy / Filter
                 if (i > 0 && applyClause.Transformations.ElementAt(i - 1).Kind != TransformationNodeKind.Filter)
                 {
-                    // Use sub queriy if prev transformation is not filter 
+                    // Use sub queriy if prev transformation is not filter
                     queryIn = new Query().From(queryIn);
                 }
 
                 switch (node.Kind)
                 {
-                    case TransformationNodeKind.Aggregate:                        
+                    case TransformationNodeKind.Aggregate:
                         queryIn = Visit(queryIn, node as AggregateTransformationNode);
                         // Aggregate is end node so return here
-                        return queryIn; 
-                    case TransformationNodeKind.GroupBy:                        
+                        return queryIn;
+                    case TransformationNodeKind.GroupBy:
                         queryIn = Visit(queryIn, node as GroupByTransformationNode);
                         break;
-                    case TransformationNodeKind.Filter:                        
-                        queryIn = Visit(queryIn, node as FilterTransformationNode);
+                    case TransformationNodeKind.Filter:
+                        queryIn = Visit(queryIn, node as FilterTransformationNode, tryToParseDates);
                         break;
                     case TransformationNodeKind.Compute:
                         queryIn = Visit(queryIn, node as ComputeTransformationNode);
                         break;
-                    case TransformationNodeKind.Expand:                        
+                    case TransformationNodeKind.Expand:
                     default:
-                        throw new NotSupportedException($"TransformationNode not {node.Kind:g} supported");                        
+                        throw new NotSupportedException($"TransformationNode not {node.Kind:g} supported");
                 }
                 i++;
             }
@@ -79,8 +79,8 @@ namespace DynamicODataToSQL
                 {
                     switch (expr.Method)
                     {
-                        case AggregationMethod.Sum:                            
-                        case AggregationMethod.Min:                            
+                        case AggregationMethod.Sum:
+                        case AggregationMethod.Min:
                         case AggregationMethod.Max:
                             queryIn = queryIn.SelectRaw($"{expr.Method:g}({GetColumnName(expr.Expression)}) AS {expr.Alias}");
                             break;
@@ -90,10 +90,10 @@ namespace DynamicODataToSQL
                         case AggregationMethod.CountDistinct:
                             queryIn = queryIn.SelectRaw($"COUNT(DISTINCT {GetColumnName(expr.Expression)}) AS {expr.Alias}");
                             break;
-                        case AggregationMethod.VirtualPropertyCount:                            
+                        case AggregationMethod.VirtualPropertyCount:
                             queryIn = queryIn.SelectRaw($"COUNT(1) AS {expr.Alias}");
                             break;
-                        case AggregationMethod.Custom:                            
+                        case AggregationMethod.Custom:
                         default:
                             throw new NotSupportedException($"Aggregate method {expr.Method:g} not supported");
                     }
@@ -144,19 +144,19 @@ namespace DynamicODataToSQL
                 else
                 {
                     throw new NotSupportedException($"Compute expression {computeExpression.Expression.GetType().Name} not supported");
-                }  
+                }
             }
-            
+
 
             return queryIn;
         }
 
-        private static Query Visit(Query queryIn, FilterTransformationNode nodeIn)
+        private static Query Visit(Query queryIn, FilterTransformationNode nodeIn, bool tryToParseDates)
         {
-            var filterClause = nodeIn.FilterClause.Expression;            
-            var filterClauseBuilder = new FilterClauseBuilder(queryIn);
+            var filterClause = nodeIn.FilterClause.Expression;
+            var filterClauseBuilder = new FilterClauseBuilder(queryIn, tryToParseDates);
             return filterClause.Accept(filterClauseBuilder);
-        }        
+        }
 
         private static string GetColumnName(QueryNode node)
         {
