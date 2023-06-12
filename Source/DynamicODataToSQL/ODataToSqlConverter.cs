@@ -96,7 +96,7 @@ namespace DynamicODataToSQL
 
             if (applyClause != null)
             {
-                query = new ApplyClauseBuilder().BuildApplyClause(query, applyClause, tryToParseDates);
+                query = new ApplyClauseBuilder(this._sqlCompiler).BuildApplyClause(query, applyClause, tryToParseDates);
                 if(filterClause != null || selectClause != null)
                 {
                     query = new Query().From(query, "apply");

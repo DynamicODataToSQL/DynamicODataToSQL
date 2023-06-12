@@ -5,12 +5,20 @@ namespace DynamicODataToSQL
     using Microsoft.OData.UriParser;
     using Microsoft.OData.UriParser.Aggregation;
     using SqlKata;
+    using SqlKata.Compilers;
 
     /// <summary>
     /// ApplyClauseBuilder
     /// </summary>
     public class ApplyClauseBuilder
     {
+        private readonly Compiler _compiler;
+        /// <summary>
+        /// Initializes a new instance of the <see cref="ApplyClauseBuilder"/> class.
+        /// </summary>
+        /// <param name="compiler">sqlCompiler.</param>
+        public ApplyClauseBuilder(Compiler compiler) => this._compiler = compiler;
+
         /// <summary>
         ///
         /// </summary>
@@ -71,7 +79,7 @@ namespace DynamicODataToSQL
             return queryIn;
         }
 
-        private static Query Visit(Query queryIn, AggregateTransformationNode nodeIn)
+        private Query Visit(Query queryIn, AggregateTransformationNode nodeIn)
         {
             foreach(var expr in nodeIn.AggregateExpressions.OfType<AggregateExpression>())
             {
@@ -82,16 +90,16 @@ namespace DynamicODataToSQL
                         case AggregationMethod.Sum:
                         case AggregationMethod.Min:
                         case AggregationMethod.Max:
-                            queryIn = queryIn.SelectRaw($"{expr.Method:g}({GetColumnName(expr.Expression)}) AS {expr.Alias}");
+                            queryIn = queryIn.SelectRaw($"{expr.Method:g}({GetColumnName(expr.Expression, true)}) AS {this._compiler.WrapValue(expr.Alias)}");
                             break;
                         case AggregationMethod.Average:
-                            queryIn = queryIn.SelectRaw($"AVG({GetColumnName(expr.Expression)}) AS {expr.Alias}");
+                            queryIn = queryIn.SelectRaw($"AVG({GetColumnName(expr.Expression, true)}) AS {this._compiler.WrapValue(expr.Alias)}");
                             break;
                         case AggregationMethod.CountDistinct:
-                            queryIn = queryIn.SelectRaw($"COUNT(DISTINCT {GetColumnName(expr.Expression)}) AS {expr.Alias}");
+                            queryIn = queryIn.SelectRaw($"COUNT(DISTINCT {GetColumnName(expr.Expression, true)}) AS {this._compiler.WrapValue(expr.Alias)}");
                             break;
                         case AggregationMethod.VirtualPropertyCount:
-                            queryIn = queryIn.SelectRaw($"COUNT(1) AS {expr.Alias}");
+                            queryIn = queryIn.SelectRaw($"COUNT(1) AS {this._compiler.WrapValue(expr.Alias)}");
                             break;
                         case AggregationMethod.Custom:
                         default:
@@ -103,11 +111,12 @@ namespace DynamicODataToSQL
             return queryIn;
         }
 
-        private static Query Visit(Query queryIn, GroupByTransformationNode nodeIn)
+
+        private Query Visit(Query queryIn, GroupByTransformationNode nodeIn)
         {
             foreach(var groupByProperty in nodeIn.GroupingProperties)
             {
-                var columnName = GetColumnName(groupByProperty.Expression);
+                var columnName = this.GetColumnName(groupByProperty.Expression);
                 queryIn = queryIn.Select(columnName).GroupBy(columnName);
             }
 
@@ -119,7 +128,7 @@ namespace DynamicODataToSQL
             return queryIn;
         }
 
-        private static Query Visit(Query queryIn, ComputeTransformationNode nodeIn)
+        private Query Visit(Query queryIn, ComputeTransformationNode nodeIn)
         {
             queryIn = queryIn.SelectRaw("*");
             foreach (var computeExpression in nodeIn.Expressions)
@@ -134,7 +143,7 @@ namespace DynamicODataToSQL
                         case "HOUR":
                         case "MINUTE":
                             var pr = se.Parameters.Single();
-                            var columnName = GetColumnName(pr);
+                            var columnName = this.GetColumnName(pr);
                             queryIn = queryIn.SelectRaw($"{se.Name}({columnName}) as {computeExpression.Alias}");
                             break;
                         default:
@@ -157,8 +166,13 @@ namespace DynamicODataToSQL
             var filterClauseBuilder = new FilterClauseBuilder(queryIn, tryToParseDates);
             return filterClause.Accept(filterClauseBuilder);
         }
-
-        private static string GetColumnName(QueryNode node)
+        /// <summary>
+        ///
+        /// </summary>
+        /// <param name="node"></param>
+        /// <param name="wrap">if true returned value will be wrapped in opening and closing column identifier</param>
+        /// <returns></returns>
+        private string GetColumnName(QueryNode node, bool wrap = false)
         {
             var column = string.Empty;
             if (node.Kind == QueryNodeKind.Convert)
@@ -175,7 +189,8 @@ namespace DynamicODataToSQL
             {
                 column = (node as SingleValueOpenPropertyAccessNode).Name.Trim();
             }
-
+            if (wrap)
+                return this._compiler.WrapValue(column);
             return column;
         }
     }
