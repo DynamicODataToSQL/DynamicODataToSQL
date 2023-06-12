@@ -41,3 +41,4 @@
 
 # Other
 *.exe filter=lfs diff=lfs merge=lfs -text
+Images/Icon.png filter=lfs diff=lfs merge=lfs -text
