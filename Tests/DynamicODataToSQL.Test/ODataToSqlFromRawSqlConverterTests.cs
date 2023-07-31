@@ -172,7 +172,7 @@ namespace DynamicODataToSQL.Test
                 {
                     {"apply","aggregate(TotalAmount with sum as TotalAmount, TotalAmount with average as AverageAmount,$count as OrderCount)"}
                 };
-                var expectedSQL = "WITH [RawSql] AS (SELECT * FROM [Orders])\nSELECT SUM(TotalAmount) AS TotalAmount, AVG(TotalAmount) AS AverageAmount, Count(1) AS OrderCount FROM [RawSql]";
+                var expectedSQL = "WITH [RawSql] AS (SELECT * FROM [Orders])\nSELECT SUM([TotalAmount]) AS [TotalAmount], AVG([TotalAmount]) AS [AverageAmount], Count(1) AS [OrderCount] FROM [RawSql]";
                 var expectedSQLParams = new Dictionary<string, object> { };
                 yield return new object[] { testName, rawSql, tryToParseDates, odataQueryParams, false, expectedSQL, expectedSQLParams };
             }
@@ -187,7 +187,7 @@ namespace DynamicODataToSQL.Test
                 {
                     {"apply","groupby((Country),aggregate(Amount with sum as Total,Amount with average as AvgAmt))"}
                 };
-                var expectedSQL = "WITH [RawSql] AS (SELECT * FROM [Orders])\nSELECT [Country], Sum(Amount) AS Total, Avg(Amount) AS AvgAmt FROM [RawSql] GROUP BY [Country]";
+                var expectedSQL = "WITH [RawSql] AS (SELECT * FROM [Orders])\nSELECT [Country], Sum([Amount]) AS [Total], Avg([Amount]) AS [AvgAmt] FROM [RawSql] GROUP BY [Country]";
                 var expectedSQLParams = new Dictionary<string, object> { };
                 yield return new object[] { testName, rawSql, tryToParseDates, odataQueryParams, false, expectedSQL, expectedSQLParams };
             }
@@ -202,7 +202,7 @@ namespace DynamicODataToSQL.Test
                 {
                     {"apply","filter(Amount ge 100)/groupby((Country),aggregate(Amount with sum as Total,Amount with average as AvgAmt))"}
                 };
-                var expectedSQL = "WITH [RawSql] AS (SELECT * FROM [Orders])\nSELECT [Country], Sum(Amount) AS Total, AVG(Amount) AS AvgAmt FROM [RawSql] WHERE [Amount] >= @p0 GROUP BY [Country]";
+                var expectedSQL = "WITH [RawSql] AS (SELECT * FROM [Orders])\nSELECT [Country], Sum([Amount]) AS [Total], AVG([Amount]) AS [AvgAmt] FROM [RawSql] WHERE [Amount] >= @p0 GROUP BY [Country]";
                 var expectedSQLParams = new Dictionary<string, object> { {"@p0", 100} };
                 yield return new object[] { testName, rawSql, tryToParseDates, odataQueryParams, false, expectedSQL, expectedSQLParams };
             }
@@ -216,7 +216,7 @@ namespace DynamicODataToSQL.Test
                 {
                     {"apply","filter(Amount ge 100)/groupby((Country),aggregate(Amount with sum as Total,Amount with average as AvgAmt))/filter(AvgAmt ge 20)"}
                 };
-                var expectedSQL = "WITH [RawSql] AS (SELECT * FROM [Orders])\nSELECT * FROM (SELECT [Country], Sum(Amount) AS Total, AVG(Amount) AS AvgAmt FROM [RawSql] WHERE [Amount] >= @p0 GROUP BY [Country]) WHERE [AvgAmt] >= @p1";
+                var expectedSQL = "WITH [RawSql] AS (SELECT * FROM [Orders])\nSELECT * FROM (SELECT [Country], Sum([Amount]) AS [Total], AVG([Amount]) AS [AvgAmt] FROM [RawSql] WHERE [Amount] >= @p0 GROUP BY [Country]) WHERE [AvgAmt] >= @p1";
                 var expectedSQLParams = new Dictionary<string, object> { { "@p0", 100 },{"@p1",20 } };
                 yield return new object[] { testName, rawSql, tryToParseDates, odataQueryParams, false, expectedSQL, expectedSQLParams };
             }
@@ -231,7 +231,7 @@ namespace DynamicODataToSQL.Test
                     {"apply","filter(Amount ge 100)/groupby((Country),aggregate(Amount with sum as Total,Amount with average as AvgAmt))"},
                     {"filter","AvgAmt ge 20" }
                 };
-                var expectedSQL = "WITH [RawSql] AS (SELECT * FROM [Orders])\nSELECT * FROM (SELECT [Country], Sum(Amount) AS Total, AVG(Amount) AS AvgAmt FROM [RawSql] WHERE [Amount] >= @p0 GROUP BY [Country]) AS [apply] WHERE [AvgAmt] >= @p1";
+                var expectedSQL = "WITH [RawSql] AS (SELECT * FROM [Orders])\nSELECT * FROM (SELECT [Country], Sum([Amount]) AS [Total], AVG([Amount]) AS [AvgAmt] FROM [RawSql] WHERE [Amount] >= @p0 GROUP BY [Country]) AS [apply] WHERE [AvgAmt] >= @p1";
                 var expectedSQLParams = new Dictionary<string, object> { { "@p0", 100 }, { "@p1", 20 } };
                 yield return new object[] { testName, rawSql, tryToParseDates, odataQueryParams, false, expectedSQL, expectedSQLParams };
             }
@@ -320,7 +320,7 @@ namespace DynamicODataToSQL.Test
                 {
                     {"apply","compute(year(OrderDate) as yr, month(OrderDate) as mn)/groupby((yr,mn),aggregate(value with average as AvgValue))" }
                 };
-                var expectedSQL = "WITH [RawSql] AS (SELECT * FROM [Orders])\nSELECT [yr], [mn], AVG(value) AS AvgValue FROM (SELECT *, year(OrderDate) as yr, month(OrderDate) as mn FROM [RawSql]) GROUP BY [yr], [mn]";
+                var expectedSQL = "WITH [RawSql] AS (SELECT * FROM [Orders])\nSELECT [yr], [mn], AVG([value]) AS [AvgValue] FROM (SELECT *, year(OrderDate) as yr, month(OrderDate) as mn FROM [RawSql]) GROUP BY [yr], [mn]";
                 var expectedSQLParams = new Dictionary<string, object> {  };
                 yield return new object[] { testName, rawSql, tryToParseDates, odataQueryParams, false, expectedSQL, expectedSQLParams };
             }
