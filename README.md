@@ -103,6 +103,7 @@ See [DynamicODataSampleService](Samples/DynamicODataSampleService) for and examp
 ## Features
 - Supports basic OData syntax for `select`, `filter`, `skip`, `top`, `orderby` and now `apply`
 - Currently does NOT support `expand` and `lambda` operators.
+- You can now retrieve `SqlKata Query` instead of SQL result. This is useful if you want to modify the query further using SqlKata. To do so simply use `ConvertToSQLKata` method instead of `ConvertToSQL`.
 
 ### filter support
 - All logical operators except `has` and `in` are supported. 

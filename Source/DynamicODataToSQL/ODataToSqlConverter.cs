@@ -36,6 +36,13 @@ namespace DynamicODataToSQL
             var query = BuildSqlKataQuery(tableName, odataQuery, count, tryToParseDates);
             return CompileSqlKataQuery(query);
         }
+        public Query ConvertToSQLKataQuery(
+            string tableName,
+            IDictionary<string, string> odataQuery,
+            bool count = false,
+            bool tryToParseDates = true) => BuildSqlKataQuery(tableName, odataQuery, count, tryToParseDates);
+
+
 
         public (string, IDictionary<string, object>) ConvertToSqlFromRawSql(
             string rawSql,
@@ -47,11 +54,18 @@ namespace DynamicODataToSQL
             return CompileSqlKataQuery(query);
         }
 
+        public Query ConvertToSQLKataQueryFromRawSql(
+            string rawSql,
+            IDictionary<string, string> odataQuery,
+            bool count = false,
+            bool tryToParseDates = true) => BuildSqlKataQueryFromRawSql(rawSql, odataQuery, count, tryToParseDates);
+
+
         private Query BuildSqlKataQueryFromRawSql(
-          string rawSql,
-          IDictionary<string, string> odataQuery,
-          bool count,
-          bool tryToParseDates)
+            string rawSql,
+            IDictionary<string, string> odataQuery,
+            bool count,
+            bool tryToParseDates)
         {
             if (string.IsNullOrWhiteSpace(rawSql))
             {
