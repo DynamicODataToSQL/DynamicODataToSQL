@@ -160,7 +160,7 @@ namespace DynamicODataToSQL
             }
         }
 
-        private static Query ApplyFunction(Query query, SingleValueFunctionCallNode leftNode, string operand, object rightValue)
+        private  Query ApplyFunction(Query query, SingleValueFunctionCallNode leftNode, string operand, object rightValue)
         {
             var columnName = GetColumnName(leftNode.Parameters.FirstOrDefault());
             switch (leftNode.Name.ToUpperInvariant())
@@ -181,6 +181,34 @@ namespace DynamicODataToSQL
                 case "TOUPPER":
                 case "TOLOWER":
                     query = query.WhereLike(columnName, rightValue, false);
+                    break;
+                case "INDEXOF":
+                    var nodes = leftNode.Parameters.ToArray();
+                    var caseSensitive = true;
+
+                    if (nodes[0].Kind == QueryNodeKind.Convert)
+                    {
+                        var paramNode = (nodes[0] as ConvertNode).Source;
+                        if (paramNode.Kind == QueryNodeKind.SingleValueFunctionCall)
+                        {
+                            var functionNode = paramNode as SingleValueFunctionCallNode;
+
+                            var functionName = functionNode.Name.ToUpperInvariant();
+                            if (functionName == "TOUPPER" || functionName == "TOLOWER")
+                            {
+                                caseSensitive = false;
+                                columnName = GetColumnName(functionNode.Parameters.FirstOrDefault());
+                            }
+                        }
+                    }
+                    if (rightValue.Equals(-1))
+                    {
+                        query = query.WhereNotContains(columnName, (string)GetConstantValue(nodes[1]), caseSensitive);
+                    }
+                    else
+                    {
+                        query = query.WhereContains(columnName, (string)GetConstantValue(nodes[1]), caseSensitive);
+                    }
                     break;
                 default:
                     break;

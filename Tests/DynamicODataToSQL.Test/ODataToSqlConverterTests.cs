@@ -343,6 +343,57 @@ namespace DynamicODataToSQL.Test
                 };
                 yield return new object[] { testName, tableName, tryToParseDates, odataQueryParams, false, expectedSQL, expectedSQLParams };
             }
+            // Test 18
+            {
+                var testName = "Filter+Not+Contains";
+                var tableName = "Products";
+                var tryToParseDates = true;
+                var odataQueryParams = new Dictionary<string, string>
+                {
+                    {"select", "Name, Type" },
+                    {"filter", "indexof(Name,'Tea') eq -1" },
+                };
+                var expectedSQL = @"SELECT [Name], [Type] FROM [Products] WHERE  NOT ([Name] like @p0)";
+                var expectedSQLParams = new Dictionary<string, object>
+                {
+                    {"@p0", "%Tea%"}
+                };
+                yield return new object[] { testName, tableName, tryToParseDates, odataQueryParams, false, expectedSQL, expectedSQLParams };
+            }
+            // Test 19
+            {
+                var testName = "Filter+Not+Contains+ToUpper";
+                var tableName = "Products";
+                var tryToParseDates = true;
+                var odataQueryParams = new Dictionary<string, string>
+                {
+                    {"select", "Name, Type" },
+                    {"filter", "indexof(toupper(Name),'Tea') eq -1" },
+                };
+                var expectedSQL = @"SELECT [Name], [Type] FROM [Products] WHERE  NOT (LOWER([Name]) like @p0)";
+                var expectedSQLParams = new Dictionary<string, object>
+                {
+                    {"@p0", "%tea%"}
+                };
+                yield return new object[] { testName, tableName, tryToParseDates, odataQueryParams, false, expectedSQL, expectedSQLParams };
+            }
+            // Test 19
+            {
+                var testName = "Filter+Contains+IndexOf+ToUpper";
+                var tableName = "Products";
+                var tryToParseDates = true;
+                var odataQueryParams = new Dictionary<string, string>
+                {
+                    {"select", "Name, Type" },
+                    {"filter", "indexof(toupper(Name),'Tea') eq 1" },
+                };
+                var expectedSQL = @"SELECT [Name], [Type] FROM [Products] WHERE LOWER([Name]) like @p0";
+                var expectedSQLParams = new Dictionary<string, object>
+                {
+                    {"@p0", "%tea%"}
+                };
+                yield return new object[] { testName, tableName, tryToParseDates, odataQueryParams, false, expectedSQL, expectedSQLParams };
+            }
 
         }
 
