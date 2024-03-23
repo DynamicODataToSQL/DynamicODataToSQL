@@ -190,8 +190,11 @@ namespace DynamicODataToSQL
                 column = (node as SingleValueOpenPropertyAccessNode).Name.Trim();
             }
             if (wrap)
-                return this._compiler.WrapValue(column);
-            return column;
+            {
+                return this._compiler.WrapValue(column).Replace(ODataToSqlConverter.SPACE_SIGN_REPLACEMENT, " ");
+            }
+                
+            return column.Replace(ODataToSqlConverter.SPACE_SIGN_REPLACEMENT, " ");
         }
     }
 }
