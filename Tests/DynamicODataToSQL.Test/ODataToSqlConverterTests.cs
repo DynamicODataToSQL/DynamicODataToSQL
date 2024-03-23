@@ -73,7 +73,7 @@ namespace DynamicODataToSQL.Test
                     {"@p1", 5},
                     {"@p2", 20},
                 };
-                yield return new object[] { testName, tableName, tryToParseDates, odataQueryParams,false, expectedSQL, expectedSQLParams };
+                yield return new object[] { testName, tableName, tryToParseDates, odataQueryParams, false, expectedSQL, expectedSQLParams };
             }
 
             // Test 2
@@ -203,7 +203,7 @@ namespace DynamicODataToSQL.Test
                     {"apply","filter(Amount ge 100)/groupby((Country),aggregate(Amount with sum as Total,Amount with average as AvgAmt))"}
                 };
                 var expectedSQL = @"SELECT [Country], Sum([Amount]) AS [Total], AVG([Amount]) AS [AvgAmt] FROM [Orders] WHERE [Amount] >= @p0 GROUP BY [Country]";
-                var expectedSQLParams = new Dictionary<string, object> { {"@p0", 100} };
+                var expectedSQLParams = new Dictionary<string, object> { { "@p0", 100 } };
                 yield return new object[] { testName, tableName, tryToParseDates, odataQueryParams, false, expectedSQL, expectedSQLParams };
             }
 
@@ -217,7 +217,7 @@ namespace DynamicODataToSQL.Test
                     {"apply","filter(Amount ge 100)/groupby((Country),aggregate(Amount with sum as Total,Amount with average as AvgAmt))/filter(AvgAmt ge 20)"}
                 };
                 var expectedSQL = @"SELECT * FROM (SELECT [Country], Sum([Amount]) AS [Total], AVG([Amount]) AS [AvgAmt] FROM [Orders] WHERE [Amount] >= @p0 GROUP BY [Country]) WHERE [AvgAmt] >= @p1";
-                var expectedSQLParams = new Dictionary<string, object> { { "@p0", 100 },{"@p1",20 } };
+                var expectedSQLParams = new Dictionary<string, object> { { "@p0", 100 }, { "@p1", 20 } };
                 yield return new object[] { testName, tableName, tryToParseDates, odataQueryParams, false, expectedSQL, expectedSQLParams };
             }
 
@@ -246,7 +246,7 @@ namespace DynamicODataToSQL.Test
                     {"filter","year(OrderDate) eq 1971" }
                 };
                 var expectedSQL = @"SELECT * FROM [Orders] WHERE DATEPART(YEAR, [OrderDate]) = @p0";
-                var expectedSQLParams = new Dictionary<string, object> { { "@p0", 1971 }};
+                var expectedSQLParams = new Dictionary<string, object> { { "@p0", 1971 } };
                 yield return new object[] { testName, tableName, tryToParseDates, odataQueryParams, false, expectedSQL, expectedSQLParams };
             }
 
@@ -322,7 +322,7 @@ namespace DynamicODataToSQL.Test
                     {"apply","compute(year(OrderDate) as yr, month(OrderDate) as mn)/groupby((yr,mn),aggregate(value with average as AvgValue))" }
                 };
                 var expectedSQL = @"SELECT [yr], [mn], AVG([value]) AS [AvgValue] FROM (SELECT *, year(OrderDate) as yr, month(OrderDate) as mn FROM [Orders]) GROUP BY [yr], [mn]";
-                var expectedSQLParams = new Dictionary<string, object> {  };
+                var expectedSQLParams = new Dictionary<string, object> { };
                 yield return new object[] { testName, tableName, tryToParseDates, odataQueryParams, false, expectedSQL, expectedSQLParams };
             }
 
@@ -394,7 +394,28 @@ namespace DynamicODataToSQL.Test
                 };
                 yield return new object[] { testName, tableName, tryToParseDates, odataQueryParams, false, expectedSQL, expectedSQLParams };
             }
-
+            // Test 20
+            {
+                var testName = "Select+ColumnsWithSpaces";
+                var tableName = "Products";
+                var tryToParseDates = true;
+                var odataQueryParams = new Dictionary<string, string>
+                {
+                    {"select", "Name, Type, Spaced_x0020_Column" },
+                    {"filter", "contains(Spaced_x0020_Column,'Tea')" },
+                    {"orderby", "Spaced_x0020_Column desc" },
+                    {"top", "20" },
+                    {"skip", "5" },
+                };
+                var expectedSQL = @"SELECT [Name], [Type], [Spaced Column] FROM [Products] WHERE [Spaced Column] like @p0 ORDER BY [Spaced Column] DESC OFFSET @p1 ROWS FETCH NEXT @p2 ROWS ONLY";
+                var expectedSQLParams = new Dictionary<string, object>
+                {
+                    {"@p0", "%Tea%"},
+                    {"@p1", 5},
+                    {"@p2", 20},
+                };
+                yield return new object[] { testName, tableName, tryToParseDates, odataQueryParams, false, expectedSQL, expectedSQLParams };
+            }
         }
 
         private static ODataToSqlConverter CreateODataToSqlConverter() => new ODataToSqlConverter(new EdmModelBuilder(), new SqlServerCompiler() { UseLegacyPagination = false });

@@ -12,6 +12,8 @@ namespace DynamicODataToSQL
     /// <inheritdoc/>
     public class ODataToSqlConverter : IODataToSqlConverter
     {
+        public const string SPACE_SIGN_REPLACEMENT = "_x0020_";
+
         private readonly IEdmModelBuilder _edmModelBuilder;
         private readonly Compiler _sqlCompiler;
 
@@ -178,11 +180,11 @@ namespace DynamicODataToSQL
                 {
                     if (direction == OrderByDirection.Ascending)
                     {
-                        query = query.OrderBy(expression.Name.Trim());
+                        query = query.OrderBy(expression.Name.Trim().Replace(ODataToSqlConverter.SPACE_SIGN_REPLACEMENT, " "));
                     }
                     else
                     {
-                        query = query.OrderByDesc(expression.Name.Trim());
+                        query = query.OrderByDesc(expression.Name.Trim().Replace(ODataToSqlConverter.SPACE_SIGN_REPLACEMENT, " "));
                     }
                 }
 
@@ -200,7 +202,7 @@ namespace DynamicODataToSQL
                 {
                     if (selectItem is PathSelectItem path)
                     {
-                        query = query.Select(path.SelectedPath.FirstSegment.Identifier.Trim());
+                        query = query.Select(path.SelectedPath.FirstSegment.Identifier.Trim().Replace(SPACE_SIGN_REPLACEMENT, " "));
                     }
                 }
             }
