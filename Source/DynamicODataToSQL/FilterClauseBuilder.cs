@@ -249,7 +249,7 @@ namespace DynamicODataToSQL
                 column = (node as SingleValueOpenPropertyAccessNode).Name.Trim();
             }
 
-            return column;
+            return column.Replace(ODataToSqlConverter.SPACE_SIGN_REPLACEMENT, " ");
         }
 
         private object GetConstantValue(QueryNode node)
