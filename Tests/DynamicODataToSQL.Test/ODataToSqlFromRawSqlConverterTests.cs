@@ -47,7 +47,7 @@ namespace DynamicODataToSQL.Test
             output.WriteLine("Actual SQL: \n{0} \nParams: {1}", actualSQL, string.Join(",", actualSQLParams.ToArray().Select(kvp => $"{kvp.Key}={kvp.Value}")));
 
             Assert.Equal(expectedSQL, actualSQL, ignoreCase: true, ignoreLineEndingDifferences: true, ignoreWhiteSpaceDifferences: true);
-            Assert.Equal(expectedSQLParams, actualSQLParams);
+            Assert.True(Utility.DictionariesAreEqual(expectedSQLParams,actualSQLParams));
         }
 
         public static IEnumerable<object[]> GetTestData()
@@ -70,7 +70,7 @@ namespace DynamicODataToSQL.Test
                 var expectedSQLParams = new Dictionary<string, object>
                 {
                     {"@p0", "%Tea%"},
-                    {"@p1", 5},
+                    {"@p1", (long)5},
                     {"@p2", 20},
                 };
                 yield return new object[] { testName, rawSql, tryToParseDates, odataQueryParams, false, expectedSQL, expectedSQLParams };
@@ -91,7 +91,7 @@ namespace DynamicODataToSQL.Test
                 var expectedSQL = "WITH [RawSql] AS (SELECT * FROM [Products])\nSELECT [Name], [Type] FROM [RawSql] ORDER BY [Id] DESC OFFSET @p0 ROWS FETCH NEXT @p1 ROWS ONLY";
                 var expectedSQLParams = new Dictionary<string, object>
                 {
-                    {"@p0", 5 },
+                    {"@p0", (long)5 },
                     {"@p1", 20},
                 };
                 yield return new object[] { testName, rawSql, tryToParseDates, odataQueryParams, false, expectedSQL, expectedSQLParams };
@@ -113,7 +113,7 @@ namespace DynamicODataToSQL.Test
                 var expectedSQLParams = new Dictionary<string, object>
                 {
                     {"@p0", "%Tea%"},
-                    {"@p1", 0 },
+                    {"@p1", (long)0 },
                     {"@p2", 20 },
                 };
                 yield return new object[] { testName, rawSql, tryToParseDates, odataQueryParams, false, expectedSQL, expectedSQLParams };

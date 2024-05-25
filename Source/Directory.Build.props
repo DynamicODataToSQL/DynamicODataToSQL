@@ -1,26 +1,26 @@
 <Project>
 
-  <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.props', '$(MSBuildThisFileDirectory)../'))" />
-
   <PropertyGroup Label="Build">
-    <GenerateDocumentationFile>true</GenerateDocumentationFile>
-  </PropertyGroup>  
-
-  <PropertyGroup Label="Source Link">
-    <!-- Optional: Declare that the Repository URL can be published to NuSpec -->
-    <PublishRepositoryUrl>true</PublishRepositoryUrl>
-    <!-- Optional: Embed source files that are not tracked by the source control manager to the PDB -->
-    <EmbedUntrackedSources>true</EmbedUntrackedSources>
-    <!-- Optional: Include PDB in the built .nupkg -->
-    <AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
+    <LangVersion>latest</LangVersion>
+    <AnalysisLevel>latest</AnalysisLevel>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
   </PropertyGroup>
 
-  <ItemGroup Label="Package References">
-    <PackageReference Include="Microsoft.SourceLink.GitHub" PrivateAssets="all" Version="1.0.0" />
-  </ItemGroup>
+  <PropertyGroup Label="Package">
+    <Authors>Vaibhav Goyal</Authors>
+    <Company>Vaibhav Goyal</Company>
+    <Copyright>Copyright © Vaibhav Goyal. All rights Reserved</Copyright>
+    <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/DynamicODataToSQL/DynamicODataToSQL</PackageProjectUrl>
+    <PackageIcon>Icon.png</PackageIcon>
+    <RepositoryUrl>https://github.com/DynamicODataToSQL/DynamicODataToSQL.git</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageReleaseNotes>https://github.com/DynamicODataToSQL/DynamicODataToSQL/releases</PackageReleaseNotes>
+  </PropertyGroup>
 
-  <ItemGroup Label="Files">
-    <None Include="..\..\Images\Icon.png" Pack="true" PackagePath="\" />
+  <ItemGroup Label="Package References">    
+    <PackageReference Include="MinVer" PrivateAssets="all" Version="5.0.0" />
   </ItemGroup>
 
 </Project>
