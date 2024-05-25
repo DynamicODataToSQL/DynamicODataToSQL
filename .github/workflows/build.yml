@@ -55,4 +55,4 @@ jobs:
       - name: "Push Package"
         run: dotnet nuget push './Artifacts/*.nupkg' -k $NUGET_AUTH_TOKEN -s https://api.nuget.org/v3/index.json
         env:
-          NUGET_AUTH_TOKEN: ${{ secrets.NUGET_TOKEN }}
+          NUGET_AUTH_TOKEN: ${{ secrets.NUGET_API_KEY }}
