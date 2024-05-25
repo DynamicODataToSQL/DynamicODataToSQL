@@ -5,6 +5,7 @@ namespace DynamicODataToSQL.Test
     using System.Linq;
     using SqlKata.Compilers;
     using Xunit;
+    using Xunit.Sdk;
     using Xunit.Abstractions;
 
     public class ODataToSqlConverterTests
@@ -47,7 +48,7 @@ namespace DynamicODataToSQL.Test
             output.WriteLine("Actual SQL: \n{0} \nParams: {1}", actualSQL, string.Join(",", actualSQLParams.ToArray().Select(kvp => $"{kvp.Key}={kvp.Value}")));
 
             Assert.Equal(expectedSQL, actualSQL, ignoreCase: true, ignoreLineEndingDifferences: true, ignoreWhiteSpaceDifferences: true);
-            Assert.Equal(expectedSQLParams, actualSQLParams);
+            Assert.True(Utility.DictionariesAreEqual(expectedSQLParams,actualSQLParams));
         }
 
         public static IEnumerable<object[]> GetTestData()
@@ -70,7 +71,7 @@ namespace DynamicODataToSQL.Test
                 var expectedSQLParams = new Dictionary<string, object>
                 {
                     {"@p0", "%Tea%"},
-                    {"@p1", 5},
+                    {"@p1", (long)5},
                     {"@p2", 20},
                 };
                 yield return new object[] { testName, tableName, tryToParseDates, odataQueryParams, false, expectedSQL, expectedSQLParams };
@@ -91,7 +92,7 @@ namespace DynamicODataToSQL.Test
                 var expectedSQL = @"SELECT [Name], [Type] FROM [Products] ORDER BY [Id] DESC OFFSET @p0 ROWS FETCH NEXT @p1 ROWS ONLY";
                 var expectedSQLParams = new Dictionary<string, object>
                 {
-                    {"@p0", 5 },
+                    {"@p0", (long)5 },
                     {"@p1", 20},
                 };
                 yield return new object[] { testName, tableName, tryToParseDates, odataQueryParams, false, expectedSQL, expectedSQLParams };
@@ -113,7 +114,7 @@ namespace DynamicODataToSQL.Test
                 var expectedSQLParams = new Dictionary<string, object>
                 {
                     {"@p0", "%Tea%"},
-                    {"@p1", 0 },
+                    {"@p1", (long)0 },
                     {"@p2", 20 },
                 };
                 yield return new object[] { testName, tableName, tryToParseDates, odataQueryParams, false, expectedSQL, expectedSQLParams };
@@ -411,7 +412,7 @@ namespace DynamicODataToSQL.Test
                 var expectedSQLParams = new Dictionary<string, object>
                 {
                     {"@p0", "%Tea%"},
-                    {"@p1", 5},
+                    {"@p1", (long)5},
                     {"@p2", 20},
                 };
                 yield return new object[] { testName, tableName, tryToParseDates, odataQueryParams, false, expectedSQL, expectedSQLParams };

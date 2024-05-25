@@ -203,14 +203,17 @@ Check unit tests for more usage examples.
 
 
 ## Roadmap
-- [] Support for validating column names and column data types.
+
+- [ ] Support for validating column names and column data types.
 
 ## Contributing
 We are always looking for people to contribute! To find out how to help out, have a look at 
 our [Contributing Guide](.github/CONTRIBUTING.md).
 
 ## Contributors
+* [Vaibhav Goyal](https://github.com/vaibhav-goyal)
 * [Maciej Pieprzyk](https://github.com/maciejpieprzyk)
+
 
 ## Code of Conduct
 Please note that this project is released with a [Contributor Code of Conduct](.github/CODE_OF_CONDUCT.md). By participating in this project you agree to abide by its terms.
