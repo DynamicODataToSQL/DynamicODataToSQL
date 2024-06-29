@@ -1,6 +1,7 @@
 namespace DynamicODataToSQL
 {
     using System;
+    using System.Collections.Generic;
     using System.Globalization;
     using System.Linq;
     using Microsoft.OData.UriParser;
@@ -23,6 +24,20 @@ namespace DynamicODataToSQL
         {
             _query = query;
             _tryToParseDates = tryToParseDates;
+        }
+
+        /// <inheritdoc/>
+        public override Query Visit(InNode nodeIn)
+        {
+            if (nodeIn.Right.Kind != QueryNodeKind.CollectionConstant)
+            {
+                throw new NotSupportedException("Non constant collection nodes are not supported by 'in' logical operator");
+            }
+
+            var leftColumnName = GetColumnName(nodeIn.Left);
+            var rightValues = GetCollectionConstantValues(nodeIn.Right as CollectionConstantNode);
+
+            return _query.WhereIn(leftColumnName, rightValues);
         }
 
         /// <inheritdoc/>
@@ -148,7 +163,9 @@ namespace DynamicODataToSQL
             {
                 case UnaryOperatorKind.Not:
                     _query = _query.Not();
-                    if (nodeIn.Operand.Kind == QueryNodeKind.SingleValueFunctionCall || nodeIn.Operand.Kind == QueryNodeKind.BinaryOperator)
+                    if (nodeIn.Operand.Kind == QueryNodeKind.SingleValueFunctionCall 
+                        || nodeIn.Operand.Kind == QueryNodeKind.BinaryOperator
+                        || nodeIn.Operand.Kind == QueryNodeKind.In)
                     {
                         return nodeIn.Operand.Accept(this);
                     }
@@ -276,10 +293,15 @@ namespace DynamicODataToSQL
             }
             else if (node.Kind == QueryNodeKind.CollectionConstant)
             {
-                return (node as CollectionConstantNode).Collection.Select(cn => GetConstantValue(cn));
+                return GetCollectionConstantValues(node as CollectionConstantNode);
             }
 
             return null;
+        }
+
+        private IEnumerable<object> GetCollectionConstantValues(CollectionConstantNode node)
+        {
+            return node.Collection.Select(cn => GetConstantValue(cn));
         }
 
         private static string GetOperatorString(BinaryOperatorKind operatorKind)
