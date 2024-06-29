@@ -176,15 +176,16 @@ namespace DynamicODataToSQL
             while (orderbyClause != null)
             {
                 var direction = orderbyClause.Direction;
-                if (orderbyClause.Expression is SingleValueOpenPropertyAccessNode expression)
+                var expressionName = GetSingleValuePropertyAccessNodeName(orderbyClause.Expression);
+                if (expressionName is not null)
                 {
                     if (direction == OrderByDirection.Ascending)
                     {
-                        query = query.OrderBy(expression.Name.Trim().Replace(ODataToSqlConverter.SPACE_SIGN_REPLACEMENT, " "));
+                        query = query.OrderBy(expressionName.Trim().Replace(ODataToSqlConverter.SPACE_SIGN_REPLACEMENT, " "));
                     }
                     else
                     {
-                        query = query.OrderByDesc(expression.Name.Trim().Replace(ODataToSqlConverter.SPACE_SIGN_REPLACEMENT, " "));
+                        query = query.OrderByDesc(expressionName.Trim().Replace(ODataToSqlConverter.SPACE_SIGN_REPLACEMENT, " "));
                     }
                 }
 
@@ -192,6 +193,21 @@ namespace DynamicODataToSQL
             }
 
             return query;
+        }
+
+        private static string GetSingleValuePropertyAccessNodeName(SingleValueNode expression)
+        {
+            if (expression is SingleValueOpenPropertyAccessNode openProperty)
+            {
+                return openProperty.Name;
+            }
+
+            if (expression is SingleValuePropertyAccessNode property)
+            {
+                return property.Property.Name;
+            }
+
+            return null;
         }
 
         private static Query BuildSelectClause(Query query, SelectExpandClause selectClause)

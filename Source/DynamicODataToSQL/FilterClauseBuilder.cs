@@ -1,6 +1,7 @@
 namespace DynamicODataToSQL
 {
     using System;
+    using System.Collections.Generic;
     using System.Globalization;
     using System.Linq;
     using Microsoft.OData.UriParser;
@@ -23,6 +24,20 @@ namespace DynamicODataToSQL
         {
             _query = query;
             _tryToParseDates = tryToParseDates;
+        }
+
+        /// <inheritdoc/>
+        public override Query Visit(InNode nodeIn)
+        {
+            if (nodeIn.Right.Kind != QueryNodeKind.CollectionConstant)
+            {
+                throw new NotSupportedException("Non constant collection nodes are not supported by 'in' logical operator");
+            }
+
+            var leftColumnName = GetColumnName(nodeIn.Left);
+            var rightValues = GetCollectionConstantValues(nodeIn.Right as CollectionConstantNode);
+
+            return _query.WhereIn(leftColumnName, rightValues);
         }
 
         /// <inheritdoc/>
@@ -109,21 +124,7 @@ namespace DynamicODataToSQL
             var columnName = GetColumnName(nodes[0]);
 
             // managing case where there is toupper or tolower function call inside first parameter
-            if (nodes[0].Kind == QueryNodeKind.Convert)
-            {
-                var paramNode = (nodes[0] as ConvertNode).Source;
-                if (paramNode.Kind == QueryNodeKind.SingleValueFunctionCall)
-                {
-                    var functionNode = paramNode as SingleValueFunctionCallNode;
-
-                    var functionName = functionNode.Name.ToUpperInvariant();
-                    if (functionName == "TOUPPER" || functionName == "TOLOWER")
-                    {
-                        caseSensitive = false;
-                        columnName = GetColumnName(functionNode.Parameters.FirstOrDefault());
-                    }
-                }
-            }
+            (caseSensitive, columnName) = GetInnerFunctionCallParameterColumn(nodes, caseSensitive, columnName);
 
             switch (nodeIn.Name.ToLowerInvariant())
             {
@@ -148,7 +149,9 @@ namespace DynamicODataToSQL
             {
                 case UnaryOperatorKind.Not:
                     _query = _query.Not();
-                    if (nodeIn.Operand.Kind == QueryNodeKind.SingleValueFunctionCall || nodeIn.Operand.Kind == QueryNodeKind.BinaryOperator)
+                    if (nodeIn.Operand.Kind == QueryNodeKind.SingleValueFunctionCall 
+                        || nodeIn.Operand.Kind == QueryNodeKind.BinaryOperator
+                        || nodeIn.Operand.Kind == QueryNodeKind.In)
                     {
                         return nodeIn.Operand.Accept(this);
                     }
@@ -186,21 +189,8 @@ namespace DynamicODataToSQL
                     var nodes = leftNode.Parameters.ToArray();
                     var caseSensitive = true;
 
-                    if (nodes[0].Kind == QueryNodeKind.Convert)
-                    {
-                        var paramNode = (nodes[0] as ConvertNode).Source;
-                        if (paramNode.Kind == QueryNodeKind.SingleValueFunctionCall)
-                        {
-                            var functionNode = paramNode as SingleValueFunctionCallNode;
+                    (caseSensitive, columnName) = GetInnerFunctionCallParameterColumn(nodes, caseSensitive, columnName);
 
-                            var functionName = functionNode.Name.ToUpperInvariant();
-                            if (functionName == "TOUPPER" || functionName == "TOLOWER")
-                            {
-                                caseSensitive = false;
-                                columnName = GetColumnName(functionNode.Parameters.FirstOrDefault());
-                            }
-                        }
-                    }
                     if (rightValue.Equals(-1))
                     {
                         query = query.WhereNotContains(columnName, (string)GetConstantValue(nodes[1]), caseSensitive);
@@ -215,6 +205,38 @@ namespace DynamicODataToSQL
             }
 
             return query;
+        }
+
+        private static (bool CaseSensitive, string ColumnName) GetInnerFunctionCallParameterColumn(QueryNode[] nodes, bool caseSensitive, string columnName)
+        {
+            if (nodes[0].Kind == QueryNodeKind.Convert)
+            {
+                var paramNode = (nodes[0] as ConvertNode).Source;
+                if (paramNode.Kind == QueryNodeKind.SingleValueFunctionCall)
+                {
+                    return GetFunctionCallParameterInfo(caseSensitive, columnName, paramNode as SingleValueFunctionCallNode);
+                }
+            }
+            else if (nodes[0].Kind == QueryNodeKind.SingleValueFunctionCall)
+            {
+                return GetFunctionCallParameterInfo(caseSensitive, columnName, nodes[0] as SingleValueFunctionCallNode);
+            }
+
+            return (caseSensitive, columnName);
+        }
+
+        private static (bool CaseSensitive, string ColumnName) GetFunctionCallParameterInfo(bool caseSensitive, string columnName, SingleValueFunctionCallNode paramNode)
+        {
+            var functionNode = paramNode;
+
+            var functionName = functionNode.Name.ToUpperInvariant();
+            if (functionName == "TOUPPER" || functionName == "TOLOWER")
+            {
+                caseSensitive = false;
+                columnName = GetColumnName(functionNode.Parameters.FirstOrDefault());
+            }
+
+            return (caseSensitive, columnName);
         }
 
         private static bool ConvertToDateTimeUTC(string dateTimeString, out DateTime? dateTime)
@@ -276,10 +298,15 @@ namespace DynamicODataToSQL
             }
             else if (node.Kind == QueryNodeKind.CollectionConstant)
             {
-                return (node as CollectionConstantNode).Collection.Select(cn => GetConstantValue(cn));
+                return GetCollectionConstantValues(node as CollectionConstantNode);
             }
 
             return null;
+        }
+
+        private IEnumerable<object> GetCollectionConstantValues(CollectionConstantNode node)
+        {
+            return node.Collection.Select(cn => GetConstantValue(cn));
         }
 
         private static string GetOperatorString(BinaryOperatorKind operatorKind)
