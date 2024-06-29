@@ -124,21 +124,7 @@ namespace DynamicODataToSQL
             var columnName = GetColumnName(nodes[0]);
 
             // managing case where there is toupper or tolower function call inside first parameter
-            if (nodes[0].Kind == QueryNodeKind.Convert)
-            {
-                var paramNode = (nodes[0] as ConvertNode).Source;
-                if (paramNode.Kind == QueryNodeKind.SingleValueFunctionCall)
-                {
-                    var functionNode = paramNode as SingleValueFunctionCallNode;
-
-                    var functionName = functionNode.Name.ToUpperInvariant();
-                    if (functionName == "TOUPPER" || functionName == "TOLOWER")
-                    {
-                        caseSensitive = false;
-                        columnName = GetColumnName(functionNode.Parameters.FirstOrDefault());
-                    }
-                }
-            }
+            (caseSensitive, columnName) = GetInnerFunctionCallParameterColumn(nodes, caseSensitive, columnName);
 
             switch (nodeIn.Name.ToLowerInvariant())
             {
@@ -203,21 +189,8 @@ namespace DynamicODataToSQL
                     var nodes = leftNode.Parameters.ToArray();
                     var caseSensitive = true;
 
-                    if (nodes[0].Kind == QueryNodeKind.Convert)
-                    {
-                        var paramNode = (nodes[0] as ConvertNode).Source;
-                        if (paramNode.Kind == QueryNodeKind.SingleValueFunctionCall)
-                        {
-                            var functionNode = paramNode as SingleValueFunctionCallNode;
+                    (caseSensitive, columnName) = GetInnerFunctionCallParameterColumn(nodes, caseSensitive, columnName);
 
-                            var functionName = functionNode.Name.ToUpperInvariant();
-                            if (functionName == "TOUPPER" || functionName == "TOLOWER")
-                            {
-                                caseSensitive = false;
-                                columnName = GetColumnName(functionNode.Parameters.FirstOrDefault());
-                            }
-                        }
-                    }
                     if (rightValue.Equals(-1))
                     {
                         query = query.WhereNotContains(columnName, (string)GetConstantValue(nodes[1]), caseSensitive);
@@ -232,6 +205,38 @@ namespace DynamicODataToSQL
             }
 
             return query;
+        }
+
+        private static (bool CaseSensitive, string ColumnName) GetInnerFunctionCallParameterColumn(QueryNode[] nodes, bool caseSensitive, string columnName)
+        {
+            if (nodes[0].Kind == QueryNodeKind.Convert)
+            {
+                var paramNode = (nodes[0] as ConvertNode).Source;
+                if (paramNode.Kind == QueryNodeKind.SingleValueFunctionCall)
+                {
+                    return GetFunctionCallParameterInfo(caseSensitive, columnName, paramNode as SingleValueFunctionCallNode);
+                }
+            }
+            else if (nodes[0].Kind == QueryNodeKind.SingleValueFunctionCall)
+            {
+                return GetFunctionCallParameterInfo(caseSensitive, columnName, nodes[0] as SingleValueFunctionCallNode);
+            }
+
+            return (caseSensitive, columnName);
+        }
+
+        private static (bool CaseSensitive, string ColumnName) GetFunctionCallParameterInfo(bool caseSensitive, string columnName, SingleValueFunctionCallNode paramNode)
+        {
+            var functionNode = paramNode;
+
+            var functionName = functionNode.Name.ToUpperInvariant();
+            if (functionName == "TOUPPER" || functionName == "TOLOWER")
+            {
+                caseSensitive = false;
+                columnName = GetColumnName(functionNode.Parameters.FirstOrDefault());
+            }
+
+            return (caseSensitive, columnName);
         }
 
         private static bool ConvertToDateTimeUTC(string dateTimeString, out DateTime? dateTime)
