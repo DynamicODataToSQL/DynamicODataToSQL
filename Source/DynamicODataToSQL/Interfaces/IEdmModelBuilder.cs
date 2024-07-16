@@ -12,7 +12,8 @@ namespace DynamicODataToSQL.Interfaces
         /// BuildTableModel.
         /// </summary>
         /// <param name="tableName">tableName.</param>
+        /// <param name="expands">expands.</param>
         /// <returns>Tuple.</returns>
-        (IEdmModel, IEdmEntityType, IEdmEntitySet) BuildTableModel(string tableName);       
+        (IEdmModel, IEdmEntityType, IEdmEntitySet) BuildTableModel(string tableName, string[] expands = null);
     }
 }

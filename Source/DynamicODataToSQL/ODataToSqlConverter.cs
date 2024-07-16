@@ -147,7 +147,7 @@ namespace DynamicODataToSQL
 
                 if (selectClause != null)
                 {
-                    query = BuildSelectClause(query, selectClause);
+                    query = BuildSelectClause(query, selectClause, modelName);
                 }
             }
 
@@ -155,11 +155,14 @@ namespace DynamicODataToSQL
         }
         private ODataQueryOptionParser GetParser(string name, IDictionary<string, string> odataQuery)
         {
-            var result = _edmModelBuilder.BuildTableModel(name);
+            var expands = (odataQuery.Keys.Contains("expand") && !string.IsNullOrWhiteSpace(odataQuery["expand"]))
+                ? odataQuery["expand"].Split(',')
+                : null;
+			var result = _edmModelBuilder.BuildTableModel(name, expands);
             var model = result.Item1;
             var entityType = result.Item2;
             var entitySet = result.Item3;
-            var parser = new ODataQueryOptionParser(model, entityType, entitySet, odataQuery);
+			var parser = new ODataQueryOptionParser(model, entityType, entitySet, odataQuery);
             parser.Resolver.EnableCaseInsensitive = true;
             parser.Resolver.EnableNoDollarQueryOptions = true;
             return parser;
@@ -194,7 +197,7 @@ namespace DynamicODataToSQL
             return query;
         }
 
-        private static Query BuildSelectClause(Query query, SelectExpandClause selectClause)
+        private static Query BuildSelectClause(Query query, SelectExpandClause selectClause, string modelName)
         {
             if (!selectClause.AllSelected)
             {
@@ -206,6 +209,24 @@ namespace DynamicODataToSQL
                     }
                 }
             }
+            else
+            {
+                query = query.Select(modelName + ".*");
+            }
+
+            foreach(var expandItem in selectClause.SelectedItems.OfType<ExpandedNavigationSelectItem>())
+            {
+				if (expandItem.SelectAndExpand.AllSelected)
+				{
+					query = query.Select(expandItem.PathToNavigationProperty[0].Identifier + ".*");
+                    var source = ((expandItem.PathToNavigationProperty[0] as NavigationPropertySegment).NavigationProperty.DeclaringType as Microsoft.OData.Edm.EdmEntityType).Name;
+                    var target = expandItem.PathToNavigationProperty[0].Identifier;
+
+                    // TODO: if the model for the navigation properties is done right, we don't need to second guess here
+                    // meanwhile this expects that 
+					query = query.Join(target, target + "." + "id", source + "." + target + "_id");
+				}			
+			}
 
             return query;
         }
