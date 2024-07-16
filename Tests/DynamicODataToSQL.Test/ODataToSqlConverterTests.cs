@@ -417,7 +417,23 @@ namespace DynamicODataToSQL.Test
                 };
                 yield return new object[] { testName, tableName, tryToParseDates, odataQueryParams, false, expectedSQL, expectedSQLParams };
             }
-        }
+            // Test 22
+            {
+				var testName = "Expands";
+				var tableName = "Products";
+				var tryToParseDates = true;
+				var odataQueryParams = new Dictionary<string, string>
+				{
+					{"expand", "Category" },
+				};
+				var expectedSQL = @"SELECT [Products].*, [Category].* FROM [Products] 
+INNER JOIN [Category] ON [Category].[id] = [Products].[Category_id]";
+				var expectedSQLParams = new Dictionary<string, object>
+				{
+				};
+				yield return new object[] { testName, tableName, tryToParseDates, odataQueryParams, false, expectedSQL, expectedSQLParams };
+			}
+		}
 
         private static ODataToSqlConverter CreateODataToSqlConverter() => new ODataToSqlConverter(new EdmModelBuilder(), new SqlServerCompiler() { UseLegacyPagination = false });
     }
