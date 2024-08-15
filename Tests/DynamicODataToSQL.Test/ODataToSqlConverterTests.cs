@@ -146,7 +146,7 @@ namespace DynamicODataToSQL.Test
                 var tryToParseDates = true;
                 var odataQueryParams = new Dictionary<string, string>
                 {
-                    {"filter", "contains(Name,'Tea') or (TotalInventory ge 100 and TotalInventory le 1000) or (TimeCreated gt '2020-06-01T00:00-04:00' and TimeCreated lt '2020-07-01T00:00-04:00') or not (Origin eq 'Canada' or Origin eq 'USA')" },
+                    {"filter", "contains(Name,'Tea') or (TotalInventory ge 100 and TotalInventory le 1000) or (TimeCreated gt 2020-06-01T00:00-04:00 and TimeCreated lt 2020-07-01T00:00-04:00) or not (Origin eq 'Canada' or Origin eq 'USA')" },
                     {"orderby", "Id desc" }
                 };
                 var expectedSQL = @"SELECT * FROM [Products] WHERE ((([Name] like @p0 OR ([TotalInventory] >= @p1 AND [TotalInventory] <= @p2)) OR ([TimeCreated] > @p3 AND [TimeCreated] < @p4)) OR NOT ([Origin] = @p5 OR [Origin] = @p6)) ORDER BY [Id] DESC";
@@ -155,8 +155,8 @@ namespace DynamicODataToSQL.Test
                     {"@p0", "%Tea%"},
                     {"@p1", 100},
                     {"@p2", 1000},
-                    {"@p3", new DateTime(2020,6,1,4,0,0,DateTimeKind.Utc)},
-                    {"@p4", new DateTime(2020,7,1,4,0,0,DateTimeKind.Utc)},
+                    {"@p3", new DateTimeOffset(2020,6,1,4,0,0,TimeSpan.Zero)},
+                    {"@p4", new DateTimeOffset(2020,7,1,4,0,0,TimeSpan.Zero)},
                     {"@p5", "Canada"},
                     {"@p6", "USA"},
                 };
@@ -204,7 +204,7 @@ namespace DynamicODataToSQL.Test
                     {"apply","filter(Amount ge 100)/groupby((Country),aggregate(Amount with sum as Total,Amount with average as AvgAmt))"}
                 };
                 var expectedSQL = @"SELECT [Country], Sum([Amount]) AS [Total], AVG([Amount]) AS [AvgAmt] FROM [Orders] WHERE [Amount] >= @p0 GROUP BY [Country]";
-                var expectedSQLParams = new Dictionary<string, object> { { "@p0", 100 } };
+                var expectedSQLParams = new Dictionary<string, object> { { "@p0", 100d } };
                 yield return new object[] { testName, tableName, tryToParseDates, odataQueryParams, false, expectedSQL, expectedSQLParams };
             }
 
@@ -218,7 +218,7 @@ namespace DynamicODataToSQL.Test
                     {"apply","filter(Amount ge 100)/groupby((Country),aggregate(Amount with sum as Total,Amount with average as AvgAmt))/filter(AvgAmt ge 20)"}
                 };
                 var expectedSQL = @"SELECT * FROM (SELECT [Country], Sum([Amount]) AS [Total], AVG([Amount]) AS [AvgAmt] FROM [Orders] WHERE [Amount] >= @p0 GROUP BY [Country]) WHERE [AvgAmt] >= @p1";
-                var expectedSQLParams = new Dictionary<string, object> { { "@p0", 100 }, { "@p1", 20 } };
+                var expectedSQLParams = new Dictionary<string, object> { { "@p0", 100d }, { "@p1", 20 } };
                 yield return new object[] { testName, tableName, tryToParseDates, odataQueryParams, false, expectedSQL, expectedSQLParams };
             }
 
@@ -233,7 +233,7 @@ namespace DynamicODataToSQL.Test
                     {"filter","AvgAmt ge 20" }
                 };
                 var expectedSQL = @"SELECT * FROM (SELECT [Country], Sum([Amount]) AS [Total], AVG([Amount]) AS [AvgAmt] FROM [Orders] WHERE [Amount] >= @p0 GROUP BY [Country]) AS [apply] WHERE [AvgAmt] >= @p1";
-                var expectedSQLParams = new Dictionary<string, object> { { "@p0", 100 }, { "@p1", 20 } };
+                var expectedSQLParams = new Dictionary<string, object> { { "@p0", 100d }, { "@p1", 20 } };
                 yield return new object[] { testName, tableName, tryToParseDates, odataQueryParams, false, expectedSQL, expectedSQLParams };
             }
 
@@ -258,10 +258,10 @@ namespace DynamicODataToSQL.Test
                 var tryToParseDates = true;
                 var odataQueryParams = new Dictionary<string, string>
                 {
-                    {"filter","date(OrderDate) gt '2001-01-17'" }
+                    {"filter","date(OrderDate) gt 2001-01-17" }
                 };
-                var expectedSQL = @"SELECT * FROM [Orders] WHERE CAST([OrderDate] as date) > @p0";
-                var expectedSQLParams = new Dictionary<string, object> { { "@p0", "2001-01-17" } };
+                var expectedSQL = @"SELECT * FROM [Orders] WHERE CAST([OrderDate] as DATE) > @p0";
+                var expectedSQLParams = new Dictionary<string, object> { { "@p0", new Microsoft.OData.Edm.Date(2001, 1, 17) } };
                 yield return new object[] { testName, tableName, tryToParseDates, odataQueryParams, false, expectedSQL, expectedSQLParams };
             }
 
@@ -272,10 +272,10 @@ namespace DynamicODataToSQL.Test
                 var tryToParseDates = true;
                 var odataQueryParams = new Dictionary<string, string>
                 {
-                    {"filter","time(OrderDate) gt '16:30'" }
+                    {"filter","time(OrderDate) gt 16:30" }
                 };
-                var expectedSQL = @"SELECT * FROM [Orders] WHERE CAST([OrderDate] as time) > @p0";
-                var expectedSQLParams = new Dictionary<string, object> { { "@p0", "16:30" } };
+                var expectedSQL = @"SELECT * FROM [Orders] WHERE CAST([OrderDate] as TIME) > @p0";
+                var expectedSQLParams = new Dictionary<string, object> { { "@p0", new Microsoft.OData.Edm.TimeOfDay(16, 30, 0, 0) } };
                 yield return new object[] { testName, tableName, tryToParseDates, odataQueryParams, false, expectedSQL, expectedSQLParams };
             }
             // Test 14
@@ -417,8 +417,67 @@ namespace DynamicODataToSQL.Test
                 };
                 yield return new object[] { testName, tableName, tryToParseDates, odataQueryParams, false, expectedSQL, expectedSQLParams };
             }
+            // Test 21
+            {
+                var testName = "FilterIn";
+                var tableName = "Products";
+                var tryToParseDates = true;
+                var odataQueryParams = new Dictionary<string, string>
+                {
+                    {"filter", "Name in ('John', 'Doe')" }
+                };
+                var expectedSQL = @"SELECT * FROM [Products] WHERE [Name] IN (@p0, @p1)";
+                var expectedSQLParams = new Dictionary<string, object>
+                {
+                    {"@p0", "John"},
+                    {"@p1", "Doe"}
+                };
+                yield return new object[] { testName, tableName, tryToParseDates, odataQueryParams, false, expectedSQL, expectedSQLParams };
+            }
+            // Test 22
+            {
+                var testName = "FilterInInts";
+                var tableName = "Orders";
+                var tryToParseDates = true;
+                var odataQueryParams = new Dictionary<string, string>
+                {
+                    {"filter", "OrderId in (2, 4, 8, 16)" }
+                };
+                var expectedSQL = @"SELECT * FROM [Orders] WHERE [OrderId] IN (@p0, @p1, @p2, @p3)";
+                var expectedSQLParams = new Dictionary<string, object>
+                {
+                    {"@p0", 2},
+                    {"@p1", 4},
+                    {"@p2", 8},
+                    {"@p3", 16}
+                };
+                yield return new object[] { testName, tableName, tryToParseDates, odataQueryParams, false, expectedSQL, expectedSQLParams };
+            }
+            // Test 23
+            {
+                var testName = "AdvancedFiltersWithNotIn";
+                var tableName = "Products";
+                var tryToParseDates = true;
+                var odataQueryParams = new Dictionary<string, string>
+                {
+                    {"filter", "contains(Name,'Tea') or (TotalInventory ge 100 and TotalInventory le 1000) or (TimeCreated gt 2020-06-01T00:00-04:00 and TimeCreated lt 2020-07-01T00:00-04:00) or not (Origin in ('Canada', 'USA'))" },
+                    {"orderby", "Id desc" }
+                };
+                var expectedSQL = @"SELECT * FROM [Products] WHERE ((([Name] like @p0 OR ([TotalInventory] >= @p1 AND [TotalInventory] <= @p2)) OR ([TimeCreated] > @p3 AND [TimeCreated] < @p4)) OR [Origin] NOT IN (@p5, @p6)) ORDER BY [Id] DESC";
+                var expectedSQLParams = new Dictionary<string, object>
+                {
+                    {"@p0", "%Tea%"},
+                    {"@p1", 100},
+                    {"@p2", 1000},
+                    {"@p3", new DateTimeOffset(2020,6,1,4,0,0,TimeSpan.Zero)},
+                    {"@p4", new DateTimeOffset(2020,7,1,4,0,0,TimeSpan.Zero)},
+                    {"@p5", "Canada"},
+                    {"@p6", "USA"},
+                };
+                yield return new object[] { testName, tableName, tryToParseDates, odataQueryParams, false, expectedSQL, expectedSQLParams };
+            }
         }
 
-        private static ODataToSqlConverter CreateODataToSqlConverter() => new ODataToSqlConverter(new EdmModelBuilder(), new SqlServerCompiler() { UseLegacyPagination = false });
+        private static ODataToSqlConverter CreateODataToSqlConverter() => new ODataToSqlConverter(new TestsEdmModelBuilder(), new SqlServerCompiler() { UseLegacyPagination = false });
     }
 }
