@@ -19,6 +19,7 @@ namespace DynamicODataToSQL
 
             var model = new EdmModel();
             var entityType = new EdmEntityType(DEFAULTNAMESPACE, tableName, null, false, true);
+            AddProperties(entityType);
             model.AddElement(entityType);
 
             var defaultContainer = new EdmEntityContainer(DEFAULTNAMESPACE, "DefaultContainer");
@@ -26,6 +27,10 @@ namespace DynamicODataToSQL
             var entitySet = defaultContainer.AddEntitySet(tableName, entityType);
 
             return (model, entityType, entitySet);
+        }
+
+        protected virtual void AddProperties(EdmEntityType entityType)
+        {
         }
     }
 }
