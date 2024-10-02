@@ -476,6 +476,29 @@ namespace DynamicODataToSQL.Test
                 };
                 yield return new object[] { testName, tableName, tryToParseDates, odataQueryParams, false, expectedSQL, expectedSQLParams };
             }
+            // Test 24
+            {
+				var testName = "Filter+matchesPattern";
+				var tableName = "Products";
+				var tryToParseDates = true;
+				var pattern = ".*ello.*rld";
+				var odataQueryParams = new Dictionary<string, string>
+				{
+					{"select", "Name, Type" },
+					{"filter", $"matchesPattern(Name,'%5E{pattern}$')" },
+					{"orderby", "Name desc" },
+					{"top", "20" },
+					{"skip", "5" },
+				};
+				var expectedSQL = @"SELECT [Name], [Type] FROM [Products] WHERE [Name] like @p0 ORDER BY [Name] DESC OFFSET @p1 ROWS FETCH NEXT @p2 ROWS ONLY";
+				var expectedSQLParams = new Dictionary<string, object>
+				{
+					{"@p0", $"{pattern.Replace(".*", "%")}"},
+					{"@p1", (long)5},
+					{"@p2", 20},
+				};
+				yield return new object[] { testName, tableName, tryToParseDates, odataQueryParams, false, expectedSQL, expectedSQLParams };
+			}
         }
 
         private static ODataToSqlConverter CreateODataToSqlConverter() => new ODataToSqlConverter(new TestsEdmModelBuilder(), new SqlServerCompiler() { UseLegacyPagination = false });

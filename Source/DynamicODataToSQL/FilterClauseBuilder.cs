@@ -137,6 +137,22 @@ namespace DynamicODataToSQL
                 case "startswith":
                     return _query.WhereStarts(columnName, (string)GetConstantValue(nodes[1]), caseSensitive);
 
+                case "matchespattern":
+                    var value = ((string)this.GetConstantValue(nodes[1]))
+                        .Replace(".*", "%");
+
+                    if (value.StartsWith("%5E", StringComparison.InvariantCulture))
+                    {
+                        value = value.Replace("%5E", "");
+                    }
+
+                    if (value[value.Length - 1] == '$')
+                    {
+                        value = value.Substring(0, value.Length - 1);
+                    }
+                    
+                    return _query.WhereLike(columnName, value, caseSensitive);
+
                 default:
                     return _query;
             }
