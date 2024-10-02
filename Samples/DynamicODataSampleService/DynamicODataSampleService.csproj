@@ -7,10 +7,13 @@
 
   <ItemGroup>
     <PackageReference Include="Dapper" Version="2.1.35" />
-    <PackageReference Include="DynamicODataToSQL" Version="1.0.8" />
     <PackageReference Include="Flurl" Version="4.0.0" />
-    <PackageReference Include="Microsoft.Data.SqlClient" Version="5.2.0" />
+    <PackageReference Include="Microsoft.Data.SqlClient" Version="5.2.2" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\Source\DynamicODataToSQL\DynamicODataToSQL.csproj" />
   </ItemGroup>
 
 

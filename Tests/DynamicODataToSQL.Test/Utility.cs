@@ -1,4 +1,4 @@
-﻿namespace DynamicODataToSQL.Test;
+namespace DynamicODataToSQL.Test;
 
 public static class Utility
 {
@@ -6,7 +6,9 @@ public static class Utility
     {
         // If any keys are missing/extra/different, the dicts are not the same
         if (!d1.Keys.ToHashSet().SetEquals(d2.Keys.ToHashSet()))
+        {
             return false;
+        }
 
         foreach (var key in d1.Keys)
         {

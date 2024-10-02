@@ -1,0 +1,45 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Source", "Source", "{46BF8D54-4751-4487-B947-AC0E124E2AD1}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{359D002C-D9AD-4673-9A03-CDB7899EE127}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Samples", "Samples", "{3DA06267-2FF8-4494-B72C-6DA18340E333}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DynamicODataSampleService", "Samples\DynamicODataSampleService\DynamicODataSampleService.csproj", "{02F08535-BF8D-4CC0-9659-4C2FDC620888}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DynamicODataToSQL", "Source\DynamicODataToSQL\DynamicODataToSQL.csproj", "{A440744D-5F5E-4554-BA26-EFE2D28F5E8D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DynamicODataToSQL.Test", "Tests\DynamicODataToSQL.Test\DynamicODataToSQL.Test.csproj", "{51C6833D-7582-4D7C-922B-8E7D140D7431}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{02F08535-BF8D-4CC0-9659-4C2FDC620888}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{02F08535-BF8D-4CC0-9659-4C2FDC620888}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{02F08535-BF8D-4CC0-9659-4C2FDC620888}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{02F08535-BF8D-4CC0-9659-4C2FDC620888}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A440744D-5F5E-4554-BA26-EFE2D28F5E8D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A440744D-5F5E-4554-BA26-EFE2D28F5E8D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A440744D-5F5E-4554-BA26-EFE2D28F5E8D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A440744D-5F5E-4554-BA26-EFE2D28F5E8D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{51C6833D-7582-4D7C-922B-8E7D140D7431}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{51C6833D-7582-4D7C-922B-8E7D140D7431}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{51C6833D-7582-4D7C-922B-8E7D140D7431}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{51C6833D-7582-4D7C-922B-8E7D140D7431}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{02F08535-BF8D-4CC0-9659-4C2FDC620888} = {3DA06267-2FF8-4494-B72C-6DA18340E333}
+		{A440744D-5F5E-4554-BA26-EFE2D28F5E8D} = {46BF8D54-4751-4487-B947-AC0E124E2AD1}
+		{51C6833D-7582-4D7C-922B-8E7D140D7431} = {359D002C-D9AD-4673-9A03-CDB7899EE127}
+	EndGlobalSection
+EndGlobal

@@ -20,7 +20,10 @@
   </PropertyGroup>
 
   <ItemGroup Label="Package References">    
-    <PackageReference Include="MinVer" PrivateAssets="all" Version="5.0.0" />
+    <PackageReference Include="MinVer" PrivateAssets="all" Version="6.0.0">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
   </ItemGroup>
 
 </Project>

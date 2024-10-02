@@ -1,36 +1,37 @@
-namespace DynamicODataToSQL
+namespace DynamicODataToSQL;
+
+using System;
+
+using DynamicODataToSQL.Interfaces;
+
+using Microsoft.OData.Edm;
+
+/// <inheritdoc/>
+public class EdmModelBuilder : IEdmModelBuilder
 {
-    using System;
-    using DynamicODataToSQL.Interfaces;
-    using Microsoft.OData.Edm;
+    private const string DEFAULTNAMESPACE = "ODataToSqlConverter";
 
     /// <inheritdoc/>
-    public class EdmModelBuilder : IEdmModelBuilder
+    public (IEdmModel, IEdmEntityType, IEdmEntitySet) BuildTableModel(string tableName)
     {
-        private const string DEFAULTNAMESPACE = "ODataToSqlConverter";
-
-        /// <inheritdoc/>
-        public (IEdmModel, IEdmEntityType, IEdmEntitySet) BuildTableModel(string tableName)
+        if (string.IsNullOrWhiteSpace(tableName))
         {
-            if (string.IsNullOrWhiteSpace(tableName))
-            {
-                throw new ArgumentNullException(nameof(tableName));
-            }
-
-            var model = new EdmModel();
-            var entityType = new EdmEntityType(DEFAULTNAMESPACE, tableName, null, false, true);
-            AddProperties(entityType);
-            model.AddElement(entityType);
-
-            var defaultContainer = new EdmEntityContainer(DEFAULTNAMESPACE, "DefaultContainer");
-            model.AddElement(defaultContainer);
-            var entitySet = defaultContainer.AddEntitySet(tableName, entityType);
-
-            return (model, entityType, entitySet);
+            throw new ArgumentNullException(nameof(tableName));
         }
 
-        protected virtual void AddProperties(EdmEntityType entityType)
-        {
-        }
+        var model = new EdmModel();
+        var entityType = new EdmEntityType(DEFAULTNAMESPACE, tableName, null, false, true);
+        AddProperties(entityType);
+        model.AddElement(entityType);
+
+        var defaultContainer = new EdmEntityContainer(DEFAULTNAMESPACE, "DefaultContainer");
+        model.AddElement(defaultContainer);
+        var entitySet = defaultContainer.AddEntitySet(tableName, entityType);
+
+        return (model, entityType, entitySet);
+    }
+
+    protected virtual void AddProperties(EdmEntityType entityType)
+    {
     }
 }
