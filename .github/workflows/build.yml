@@ -24,14 +24,14 @@ jobs:
       - name: "Install .NET"
         uses: actions/setup-dotnet@v4
       - name: Restore
-        run: dotnet restore ./Source/DynamicODataToSQL.sln
+        run: dotnet restore
       - name: Build
-        run: dotnet build ./Source/DynamicODataToSQL.sln --no-restore
+        run: dotnet build -c Release --no-restore
       - name: Test
-        run: dotnet test ./Source/DynamicODataToSQL.sln --no-restore
+        run: dotnet test -c Release --no-build
       - name: Pack
         if: github.event_name == 'release'
-        run: dotnet pack ./Source/DynamicODataToSQL.sln --no-restore --include-symbols --include-source -p:SymbolPackageFormat=snupkg -o ./Artifacts
+        run: dotnet pack -c Release --no-build --include-symbols --include-source -p:SymbolPackageFormat=snupkg -o ./Artifacts
       - name: "Publish Artifacts"
         if: github.event_name == 'release'
         uses: actions/upload-artifact@v4
