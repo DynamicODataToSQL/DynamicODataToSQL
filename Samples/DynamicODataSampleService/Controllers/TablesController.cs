@@ -2,6 +2,7 @@ namespace DynamicODataSampleService.Controllers;
 
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -16,24 +17,19 @@ using Flurl;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
 
 [ApiController]
 [Route("[controller]")]
 public class TablesController : ControllerBase
 {
-
-    private readonly ILogger<TablesController> _logger;
     private readonly IODataToSqlConverter _oDataToSqlConverter;
     private readonly string _connectionString;
 
-    public TablesController(ILogger<TablesController> logger,
-        IODataToSqlConverter oDataToSqlConverter,
+    public TablesController(IODataToSqlConverter oDataToSqlConverter,
         IConfiguration configuration)
     {
         ArgumentNullException.ThrowIfNull(configuration);
 
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _oDataToSqlConverter = oDataToSqlConverter ?? throw new ArgumentNullException(nameof(oDataToSqlConverter));
         _connectionString = configuration.GetConnectionString("Sql");
     }
@@ -52,8 +48,8 @@ public class TablesController : ControllerBase
                     { "select", select },
                     { "filter", filter },
                     { "orderby", orderby },
-                    { "top", (top + 1).ToString() },
-                    { "skip", skip.ToString() }
+                    { "top", (top + 1).ToString(null,CultureInfo.InvariantCulture) },
+                    { "skip", skip.ToString(null,CultureInfo.InvariantCulture) }
                 }
             );
         IEnumerable<dynamic> rows = null;

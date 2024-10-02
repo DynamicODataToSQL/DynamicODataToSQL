@@ -1,4 +1,4 @@
-namespace DynamicODataToSQL;
+namespace DynamicODataToSQL.Test;
 
 using System.Collections.Generic;
 

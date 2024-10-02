@@ -11,7 +11,7 @@ using Xunit.Abstractions;
 
 public class ODataToSqlConverterTests(ITestOutputHelper output)
 {
-    private readonly ITestOutputHelper output = output;
+    private readonly ITestOutputHelper _output = output;
 
     [Theory]
     [MemberData(nameof(GetTestData))]
@@ -28,9 +28,9 @@ public class ODataToSqlConverterTests(ITestOutputHelper output)
         var oDataToSqlConverter = CreateODataToSqlConverter();
 
         // Act
-        output.WriteLine($"Test: {testName}");
-        output.WriteLine($"ODataQuery : {string.Join("&", odataQuery.Select(kvp => $"{kvp.Key}={kvp.Value}"))}");
-        output.WriteLine("Expected SQL: \n{0} \nParams: {1}", expectedSQL, string.Join(",", expectedSQLParams.ToArray().Select(kvp => $"{kvp.Key}={kvp.Value}")));
+        _output.WriteLine($"Test: {testName}");
+        _output.WriteLine($"ODataQuery : {string.Join("&", odataQuery.Select(kvp => $"{kvp.Key}={kvp.Value}"))}");
+        _output.WriteLine("Expected SQL: \n{0} \nParams: {1}", expectedSQL, string.Join(",", expectedSQLParams.ToArray().Select(kvp => $"{kvp.Key}={kvp.Value}")));
         var result = oDataToSqlConverter.ConvertToSQL(
             tableName,
             odataQuery,
@@ -40,7 +40,7 @@ public class ODataToSqlConverterTests(ITestOutputHelper output)
         // Assert
         var actualSQL = result.Item1;
         var actualSQLParams = result.Item2;
-        output.WriteLine("Actual SQL: \n{0} \nParams: {1}", actualSQL, string.Join(",", actualSQLParams.ToArray().Select(kvp => $"{kvp.Key}={kvp.Value}")));
+        _output.WriteLine("Actual SQL: \n{0} \nParams: {1}", actualSQL, string.Join(",", actualSQLParams.ToArray().Select(kvp => $"{kvp.Key}={kvp.Value}")));
 
         Assert.Equal(expectedSQL, actualSQL, ignoreCase: true, ignoreLineEndingDifferences: true, ignoreWhiteSpaceDifferences: true);
         Assert.True(Utility.DictionariesAreEqual(expectedSQLParams, actualSQLParams));
